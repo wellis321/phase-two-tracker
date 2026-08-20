@@ -70,7 +70,7 @@
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <span class="footer-env footer-env--<?= e(APP_ENV) ?>"><?= e(strtoupper(APP_ENV)) ?></span>
+    <span class="footer-env footer-env--<?= e(APP_ENV) ?>"><?= e(app_env_label()) ?></span>
     <div class="footer-tools">
       <?php if (SOR_SYSTEM_URL !== ''): ?><a href="<?= e(SOR_SYSTEM_URL) ?>/">SOR System</a><?php endif; ?>
       <a href="<?= e(ERC_SITE_URL) ?>/">ERC Portal</a>

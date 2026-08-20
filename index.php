@@ -65,6 +65,11 @@ $upcomingMilestones = $db->query(
      ORDER BY target_date LIMIT 8"
 )->fetchAll();
 
+$allMilestones     = $db->query("SELECT * FROM pm_milestones ORDER BY target_date IS NULL, target_date")->fetchAll();
+$roadmap           = build_milestone_roadmap($allMilestones, true);
+$roadmapHeading     = "Roadmap — what's ahead";
+$roadmapViewAllUrl  = APP_URL . '/milestones/index.php';
+
 $topRisks = $db->query(
     "SELECT * FROM pm_risks_issues WHERE status != 'closed' ORDER BY FIELD(severity,'red','amber','green'), raised_date DESC LIMIT 6"
 )->fetchAll();
@@ -138,6 +143,8 @@ require __DIR__ . '/includes/layout/header.php';
   </p>
   <?php endif; ?>
 </div>
+
+<?php require __DIR__ . '/includes/layout/roadmap.php'; ?>
 
 <div class="stats-grid">
   <a href="<?= APP_URL ?>/tasks/index.php" class="stat-card">

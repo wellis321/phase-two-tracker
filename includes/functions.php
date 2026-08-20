@@ -15,6 +15,17 @@ function asset_url(string $path): string
     return APP_URL . $path . '?v=' . $v;
 }
 
+/** Footer badge label for the current deployment (APP_ENV). */
+function app_env_label(): string
+{
+    return match (APP_ENV) {
+        'local'       => 'LOCAL',
+        'development' => 'DEVELOPMENT',
+        'production'  => 'PRODUCTION',
+        default       => strtoupper(APP_ENV),
+    };
+}
+
 function redirect(string $url): never
 {
     header('Location: ' . $url);
@@ -253,4 +264,74 @@ function days_until(?string $date): ?int
     $ts = strtotime($date);
     if (!$ts) return null;
     return (int)floor((strtotime(date('Y-m-d', $ts)) - strtotime(date('Y-m-d'))) / 86400);
+}
+
+/**
+ * Builds the roadmap timeline data structure (phase rows, axis ticks,
+ * date->% helper) from a milestone list. Returns null when there isn't
+ * enough dated data to plot.
+ *
+ * When $hideCompletePhases is true, any phase where every milestone is
+ * already 'complete' is dropped entirely, and the date axis is rebuilt
+ * from only what's left — a condensed, forward-looking view for the
+ * dashboard, as opposed to the full history shown on the Milestones page.
+ */
+function build_milestone_roadmap(array $milestones, bool $hideCompletePhases = false): ?array
+{
+    $dated = array_values(array_filter($milestones, fn($m) => !empty($m['target_date'])));
+    if (count($dated) < 2) return null;
+
+    $phaseGroups = [];
+    foreach ($dated as $m) {
+        $phase = ($m['phase'] !== null && $m['phase'] !== '') ? $m['phase'] : 'Unphased';
+        $phaseGroups[$phase][] = $m;
+    }
+
+    if ($hideCompletePhases) {
+        $phaseGroups = array_filter($phaseGroups, function (array $items): bool {
+            foreach ($items as $m) {
+                if ($m['status'] !== 'complete') return true;
+            }
+            return false;
+        });
+        if (!$phaseGroups) return null;
+    }
+
+    $shown = array_merge(...array_values($phaseGroups));
+    if (count($shown) < 2) return null;
+
+    $timestamps = array_map(fn($m) => strtotime($m['target_date']), $shown);
+    $todayTs    = strtotime(date('Y-m-d'));
+    $rangeMinTs = min(min($timestamps), $todayTs);
+    $rangeMaxTs = max(max($timestamps), $todayTs);
+    $pad        = max((int)round(($rangeMaxTs - $rangeMinTs) * 0.06), 86400 * 14);
+    $axisMinTs  = $rangeMinTs - $pad;
+    $axisMaxTs  = $rangeMaxTs + $pad;
+    $axisSpan   = $axisMaxTs - $axisMinTs;
+    $toPct      = fn(int $ts): float => $axisSpan > 0 ? max(0, min(100, ($ts - $axisMinTs) / $axisSpan * 100)) : 50.0;
+
+    uksort($phaseGroups, function ($a, $b) use ($phaseGroups) {
+        $aMin = min(array_map(fn($m) => strtotime($m['target_date']), $phaseGroups[$a]));
+        $bMin = min(array_map(fn($m) => strtotime($m['target_date']), $phaseGroups[$b]));
+        return $aMin <=> $bMin;
+    });
+
+    $axisTicks = [];
+    $tick = new DateTime('@' . $axisMinTs);
+    $tick->setTime(0, 0, 0);
+    $qStartMonth = intdiv(((int)$tick->format('n')) - 1, 3) * 3 + 1;
+    $tick->setDate((int)$tick->format('Y'), $qStartMonth, 1);
+    while ($tick->getTimestamp() <= $axisMaxTs) {
+        if ($tick->getTimestamp() >= $axisMinTs) {
+            $axisTicks[] = ['pct' => $toPct($tick->getTimestamp()), 'label' => $tick->format('M Y')];
+        }
+        $tick->modify('+3 months');
+    }
+
+    return [
+        'phaseGroups' => $phaseGroups,
+        'axisTicks'   => $axisTicks,
+        'todayPct'    => $toPct($todayTs),
+        'toPct'       => $toPct,
+    ];
 }
