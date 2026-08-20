@@ -11,6 +11,7 @@
     </div>
   </div>
 </footer>
+<script src="<?= asset_url('/assets/js/main.js') ?>"></script>
 <?php if (!empty($includeHelpNavJs)): ?>
 <script src="<?= asset_url('/assets/js/help-doc-nav.js') ?>"></script>
 <?php endif; ?>

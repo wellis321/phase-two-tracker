@@ -79,10 +79,10 @@ require __DIR__ . '/../includes/layout/header.php';
       <tr><td colspan="7" class="empty-note">Nothing recorded yet.</td></tr>
       <?php endif; ?>
       <?php foreach ($risks as $r): ?>
-      <tr>
+      <tr class="table-row--clickable" data-href="<?= APP_URL ?>/risks/view.php?id=<?= (int)$r['id'] ?>">
         <td><?= rag_badge($r['severity']) ?></td>
         <td><?= e(ucfirst($r['type'])) ?></td>
-        <td><?= e($r['title']) ?></td>
+        <td><a href="<?= APP_URL ?>/risks/view.php?id=<?= (int)$r['id'] ?>" class="table-entity-link"><?= e($r['title']) ?></a></td>
         <td><?= e($r['display_name'] ?: $r['username'] ?: '—') ?></td>
         <td><span class="pill pill--<?= e($r['status']) ?>"><?= e($r['status']) ?></span></td>
         <td><?= format_date($r['raised_date']) ?></td>

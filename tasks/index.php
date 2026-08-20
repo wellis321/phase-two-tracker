@@ -75,8 +75,8 @@ require __DIR__ . '/../includes/layout/header.php';
       <tr><td colspan="5" class="empty-note">No tasks yet.</td></tr>
       <?php endif; ?>
       <?php foreach ($tasks as $t): ?>
-      <tr>
-        <td><?= e($t['title']) ?></td>
+      <tr class="table-row--clickable" data-href="<?= APP_URL ?>/tasks/view.php?id=<?= (int)$t['id'] ?>">
+        <td><a href="<?= APP_URL ?>/tasks/view.php?id=<?= (int)$t['id'] ?>" class="table-entity-link"><?= e($t['title']) ?></a></td>
         <td><?= e($t['display_name'] ?: $t['username'] ?: '—') ?></td>
         <td><span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_', ' ', $t['status'])) ?></span></td>
         <td><?= format_date($t['due_date']) ?></td>

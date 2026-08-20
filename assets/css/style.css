@@ -405,6 +405,10 @@ tbody tr:hover td { background: #f8fbf9; }
 .icon-btn:hover { background: var(--green-light); border-color: var(--green); }
 .icon-btn svg { width: 14px; height: 14px; }
 
+.table-entity-link { color: inherit; text-decoration: none; font-weight: 500; }
+.table-entity-link:hover { color: var(--green-dark); text-decoration: underline; }
+.table-row--clickable { cursor: pointer; }
+
 /* ─── Badges / pills ──────────────────────────── */
 .rag {
   display: inline-block;

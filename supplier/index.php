@@ -77,9 +77,9 @@ require __DIR__ . '/../includes/layout/header.php';
       <tr><td colspan="6" class="empty-note">Nothing recorded yet.</td></tr>
       <?php endif; ?>
       <?php foreach ($activities as $s): ?>
-      <tr>
+      <tr class="table-row--clickable" data-href="<?= APP_URL ?>/supplier/view.php?id=<?= (int)$s['id'] ?>">
         <td><?= e($s['supplier']) ?></td>
-        <td><?= e($s['title']) ?></td>
+        <td><a href="<?= APP_URL ?>/supplier/view.php?id=<?= (int)$s['id'] ?>" class="table-entity-link"><?= e($s['title']) ?></a></td>
         <td><?= e($s['display_name'] ?: $s['username'] ?: '—') ?></td>
         <td><span class="pill pill--<?= e($s['status']) ?>"><?= e(str_replace('_', ' ', $s['status'])) ?></span></td>
         <td><?= format_date($s['due_date']) ?></td>

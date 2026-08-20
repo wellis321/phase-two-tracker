@@ -46,8 +46,8 @@ require __DIR__ . '/../includes/layout/header.php';
       <tr><td colspan="5" class="empty-note">No milestones recorded yet.</td></tr>
       <?php endif; ?>
       <?php foreach ($milestones as $m): ?>
-      <tr>
-        <td><?= e($m['title']) ?></td>
+      <tr class="table-row--clickable" data-href="<?= APP_URL ?>/milestones/view.php?id=<?= (int)$m['id'] ?>">
+        <td><a href="<?= APP_URL ?>/milestones/view.php?id=<?= (int)$m['id'] ?>" class="table-entity-link"><?= e($m['title']) ?></a></td>
         <td><?= e($m['phase'] ?: '—') ?></td>
         <td><?= format_date($m['target_date']) ?></td>
         <td><span class="pill pill--<?= e($m['status']) ?>"><?= e(str_replace('_', ' ', $m['status'])) ?></span></td>
