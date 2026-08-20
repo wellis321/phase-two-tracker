@@ -34,6 +34,7 @@ require __DIR__ . '/includes/layout/header.php';
     <p class="help-nav-section">Features</p>
     <a href="#big-picture">Seeing the big picture</a>
     <a href="#quick-add">Adding things quickly</a>
+    <a href="#agendas">Publishing a meeting agenda</a>
     <p class="help-nav-section">Workflow</p>
     <a href="#typical-week">A typical week</a>
   </nav>
@@ -230,13 +231,13 @@ require __DIR__ . '/includes/layout/header.php';
     <section class="card help-card" id="quick-add">
       <p class="help-card-label">Features</p>
       <h2>Adding things quickly</h2>
-      <p class="dl-value">
-        Admins get a <strong>+</strong> button in the bottom-right corner of every page. Click it, pick what you're
-        adding (task, milestone, risk/issue, decision, or supplier activity), fill in just the essentials, and hit
-        <strong>Add &amp; add another</strong> — the dialog stays open and clears itself so you can log several
-        things back-to-back without navigating anywhere. Press <strong>Done</strong> when you're finished and the
-        page refreshes to show what you added.
-      </p>
+      <p class="dl-value">Admins get a <strong>+</strong> button in the bottom-right corner of every page. Click it, pick what you're adding (task, milestone, risk/issue, decision, or supplier activity), fill in just the essentials, and hit <strong>Add &amp; add another</strong> — the dialog stays open and clears itself so you can log several things back-to-back without navigating anywhere. Press <strong>Done</strong> when you're finished and the page refreshes to show what you added.</p>
+    </section>
+
+    <section class="card help-card" id="agendas">
+      <p class="help-card-label">Features</p>
+      <h2>Publishing a meeting agenda</h2>
+      <p class="dl-value">The <a href="<?= APP_URL ?>/agenda/index.php">Agendas</a> page generates a draft agenda from whatever's live right now — overall status, open decisions, open risks and issues, and upcoming or at-risk milestones — as one editable block of text. Nothing is fixed: rewrite it, delete sections, add your own, or hit <strong>Regenerate from current data</strong> to pull a fresh draft (this keeps the title and meeting date you've typed, but replaces the text). Publishing saves it to the archive exactly as you left it, so past agendas stay a record of what was actually in front of the room, not a live query that changes after the fact.</p>
     </section>
 
     <section class="card help-card" id="typical-week">

@@ -108,6 +108,20 @@ CREATE TABLE IF NOT EXISTS pm_weekly_snapshots (
   CONSTRAINT fk_pm_snapshots_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Meeting agendas. Generated from live data (status, decisions, risks,
+-- milestones) into `content` as one editable text block, then published —
+-- an archived record of what was actually put in front of each meeting.
+CREATE TABLE IF NOT EXISTS pm_agendas (
+  id                  INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  title               VARCHAR(150)  NOT NULL,
+  meeting_date        DATE,
+  content             TEXT NOT NULL,
+  created_by_user_id  INT UNSIGNED,
+  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_created_at (created_at),
+  CONSTRAINT fk_pm_agendas_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- User-defined tags, freely nestable (parent_id NULL = top-level, e.g. a
 -- "System" tag with "ROCC"/"NECH"/"APEX" nested underneath it). Uniqueness
 -- of a tag's name among its siblings is enforced in application code (see

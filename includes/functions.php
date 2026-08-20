@@ -267,6 +267,100 @@ function days_until(?string $date): ?int
 }
 
 /**
+ * Drafts a plain-text meeting agenda from current status, open decisions,
+ * open risks/issues, and upcoming/at-risk milestones. Meant to be edited
+ * before publishing, not used verbatim.
+ */
+function generate_agenda_draft(PDO $db): string
+{
+    $latestSnapshot = $db->query(
+        'SELECT overall_status, period_label FROM pm_weekly_snapshots ORDER BY created_at DESC LIMIT 1'
+    )->fetch();
+
+    $redRiskCount       = (int)$db->query("SELECT COUNT(*) FROM pm_risks_issues WHERE status != 'closed' AND severity = 'red'")->fetchColumn();
+    $atRiskMilestones   = (int)$db->query("SELECT COUNT(*) FROM pm_milestones WHERE status = 'at_risk'")->fetchColumn();
+    $overdueTasks       = (int)$db->query("SELECT COUNT(*) FROM pm_tasks WHERE status != 'done' AND due_date IS NOT NULL AND due_date < CURDATE()")->fetchColumn();
+    $openDecisionsCount = (int)$db->query("SELECT COUNT(*) FROM pm_decisions WHERE status = 'open'")->fetchColumn();
+
+    $headline = null;
+    if ($redRiskCount > 0) {
+        $headline = $redRiskCount . ' red ' . ($redRiskCount === 1 ? 'risk' : 'risks') . ' open';
+    } elseif ($atRiskMilestones > 0) {
+        $headline = $atRiskMilestones . ' ' . ($atRiskMilestones === 1 ? 'milestone' : 'milestones') . ' at risk';
+    } elseif ($overdueTasks > 0) {
+        $headline = $overdueTasks . ' ' . ($overdueTasks === 1 ? 'task' : 'tasks') . ' overdue';
+    } elseif ($openDecisionsCount > 0) {
+        $headline = $openDecisionsCount . ' ' . ($openDecisionsCount === 1 ? 'decision' : 'decisions') . ' awaiting a call';
+    }
+
+    $decisions = $db->query(
+        "SELECT title, needed_by_date FROM pm_decisions WHERE status = 'open' ORDER BY needed_by_date IS NULL, needed_by_date"
+    )->fetchAll();
+
+    $risks = $db->query(
+        "SELECT title, type, severity FROM pm_risks_issues WHERE status != 'closed'
+         ORDER BY FIELD(severity,'red','amber','green'), raised_date DESC LIMIT 8"
+    )->fetchAll();
+
+    $milestones = $db->query(
+        "SELECT title, target_date, status FROM pm_milestones
+         WHERE status != 'complete'
+           AND (status = 'at_risk' OR (target_date IS NOT NULL AND target_date <= DATE_ADD(CURDATE(), INTERVAL 90 DAY)))
+         ORDER BY target_date IS NULL, target_date"
+    )->fetchAll();
+
+    $lines = [];
+    $lines[] = 'PROGRAMME BOARD — MEETING AGENDA';
+    $lines[] = 'Week of ' . date('j M Y');
+    $lines[] = '';
+
+    $lines[] = '1. OVERALL STATUS' . ($latestSnapshot ? ': ' . strtoupper((string)$latestSnapshot['overall_status']) : ': not yet published');
+    if ($headline) $lines[] = '   ' . $headline;
+    if ($latestSnapshot) $lines[] = '   (from weekly update: ' . $latestSnapshot['period_label'] . ')';
+    $lines[] = '';
+
+    $lines[] = '2. DECISIONS REQUIRED';
+    if ($decisions) {
+        foreach ($decisions as $d) {
+            $due = $d['needed_by_date'] ? ' (needed by ' . date('j M Y', strtotime($d['needed_by_date'])) . ')' : '';
+            $lines[] = '   - ' . $d['title'] . $due;
+        }
+    } else {
+        $lines[] = '   - None currently open.';
+    }
+    $lines[] = '';
+
+    $lines[] = '3. RISKS & ISSUES';
+    if ($risks) {
+        foreach ($risks as $r) {
+            $lines[] = '   - [' . strtoupper((string)$r['severity']) . '] ' . $r['title'] . ' (' . ucfirst((string)$r['type']) . ')';
+        }
+    } else {
+        $lines[] = '   - None currently open.';
+    }
+    $lines[] = '';
+
+    $lines[] = '4. MILESTONES';
+    if ($milestones) {
+        foreach ($milestones as $m) {
+            $date = $m['target_date'] ? date('j M Y', strtotime($m['target_date'])) : 'no date set';
+            $lines[] = '   - ' . $m['title'] . ' — ' . $date . ' (' . str_replace('_', ' ', (string)$m['status']) . ')';
+        }
+    } else {
+        $lines[] = '   - Nothing upcoming or at risk in the next 90 days.';
+    }
+    $lines[] = '';
+
+    $lines[] = '5. ANY OTHER BUSINESS';
+    $lines[] = '';
+    $lines[] = '';
+    $lines[] = '6. NEXT MEETING';
+    $lines[] = '';
+
+    return implode("\n", $lines);
+}
+
+/**
  * Builds the roadmap timeline data structure (phase rows, axis ticks,
  * date->% helper) from a milestone list. Returns null when there isn't
  * enough dated data to plot.
