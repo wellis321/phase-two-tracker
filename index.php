@@ -30,6 +30,20 @@ $activeSupplier = (int)$db->query("SELECT COUNT(*) FROM pm_supplier_activities W
 $upcomingMilestones90 = (int)$db->query(
     "SELECT COUNT(*) FROM pm_milestones WHERE status != 'complete' AND target_date IS NOT NULL AND target_date <= DATE_ADD(CURDATE(), INTERVAL 90 DAY)"
 )->fetchColumn();
+$redRiskCount     = (int)$db->query("SELECT COUNT(*) FROM pm_risks_issues WHERE status != 'closed' AND severity = 'red'")->fetchColumn();
+$atRiskMilestones = (int)$db->query("SELECT COUNT(*) FROM pm_milestones WHERE status = 'at_risk'")->fetchColumn();
+$overdueTasks     = (int)$db->query("SELECT COUNT(*) FROM pm_tasks WHERE status != 'done' AND due_date IS NOT NULL AND due_date < CURDATE()")->fetchColumn();
+
+$healthContext = null;
+if ($redRiskCount > 0) {
+    $healthContext = $redRiskCount . ' red ' . ($redRiskCount === 1 ? 'risk' : 'risks') . ' open';
+} elseif ($atRiskMilestones > 0) {
+    $healthContext = $atRiskMilestones . ' ' . ($atRiskMilestones === 1 ? 'milestone' : 'milestones') . ' at risk';
+} elseif ($overdueTasks > 0) {
+    $healthContext = $overdueTasks . ' ' . ($overdueTasks === 1 ? 'task' : 'tasks') . ' overdue';
+} elseif ($openDecisions > 0) {
+    $healthContext = $openDecisions . ' ' . ($openDecisions === 1 ? 'decision' : 'decisions') . ' awaiting a call';
+}
 
 $myTasks = [];
 if (get_current_user_id() > 0) {
@@ -70,7 +84,7 @@ require __DIR__ . '/includes/layout/header.php';
 <div class="card" style="margin-bottom:1rem;">
   <?php if ($latestSnapshot): ?>
   <div class="status-hero">
-    <?= rag_badge($latestSnapshot['overall_status']) ?>
+    <?= health_indicator($latestSnapshot['overall_status'], $healthContext) ?>
     <div class="status-hero-text">
       <h2><?= e($latestSnapshot['period_label']) ?></h2>
       <div class="status-hero-meta">

@@ -75,6 +75,18 @@ function rag_badge(?string $level): string
     return '<span class="rag rag-' . e($level) . '">' . $label . '</span>';
 }
 
+function health_indicator(?string $level, ?string $context = null): string
+{
+    $level  = strtolower((string)$level);
+    $labels = ['red' => 'Red', 'amber' => 'Amber', 'green' => 'Green'];
+    $label  = $labels[$level] ?? ucfirst($level);
+    return '<div class="health-indicator health-indicator--' . e($level) . '">'
+        . '<span class="health-indicator__label">Overall status</span>'
+        . '<span class="health-indicator__value">' . e($label) . '</span>'
+        . ($context !== null && $context !== '' ? '<span class="health-indicator__context">' . e($context) . '</span>' : '')
+        . '</div>';
+}
+
 function icon_edit(): string
 {
     return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 3.6a1.7 1.7 0 0 1 2.4 2.4L7 14.8l-3.2.8.8-3.2 8.8-8.8z"/></svg>';

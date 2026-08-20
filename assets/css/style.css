@@ -182,6 +182,32 @@ body {
   flex-wrap: wrap;
 }
 .status-hero .rag { font-size: .95rem; padding: .35rem .8rem; }
+
+.health-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  padding: 1rem 1.25rem;
+  color: #fff;
+  text-align: center;
+  flex-shrink: 0;
+}
+.health-indicator__label {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  opacity: .85;
+  margin-bottom: .3rem;
+}
+.health-indicator__value { font-size: 1.35rem; font-weight: 800; letter-spacing: .02em; line-height: 1.1; }
+.health-indicator__context { font-size: .74rem; margin-top: .35rem; opacity: .9; }
+.health-indicator--red   { background: var(--red); }
+.health-indicator--amber { background: var(--amber); }
+.health-indicator--green { background: var(--rgreen); }
+
 .status-hero-text { flex: 1 1 260px; }
 .status-hero-text h2 { margin: 0 0 .35rem; font-size: 1.05rem; }
 .status-hero-meta { font-size: .8rem; color: var(--muted); margin: 0; }

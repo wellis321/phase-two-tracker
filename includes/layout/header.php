@@ -23,6 +23,7 @@
       <a href="<?= APP_URL ?>/supplier/index.php" class="<?= ($activePage ?? '') === 'supplier' ? 'nav--active' : '' ?>">Supplier Activity</a>
       <a href="<?= APP_URL ?>/milestones/index.php" class="<?= ($activePage ?? '') === 'milestones' ? 'nav--active' : '' ?>">Milestones</a>
       <a href="<?= APP_URL ?>/updates/index.php" class="<?= ($activePage ?? '') === 'updates' ? 'nav--active' : '' ?>">Weekly Archive</a>
+      <a href="<?= APP_URL ?>/help.php" class="<?= ($activePage ?? '') === 'help' ? 'nav--active' : '' ?>">Help</a>
     </nav>
     <?php if (is_logged_in()): ?>
     <div class="nav-user">
