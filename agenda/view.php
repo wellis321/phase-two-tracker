@@ -55,23 +55,19 @@ require __DIR__ . '/../includes/layout/header.php';
 
 <?php if ($attendees['attending'] || $attendees['apologies']): ?>
 <div class="card" style="margin-bottom:1rem;">
-  <div class="detail-grid">
+  <div class="detail-grid"<?= (!$attendees['attending'] || !$attendees['apologies']) ? ' style="grid-template-columns: 1fr;"' : '' ?>>
+    <?php if ($attendees['attending']): ?>
     <div>
       <span class="dl-label">Attending (<?= count($attendees['attending']) ?>)</span>
-      <?php if ($attendees['attending']): ?>
       <p class="dl-value" style="margin-bottom:0;"><?= implode(', ', array_map('e', array_column($attendees['attending'], 'name'))) ?></p>
-      <?php else: ?>
-      <p class="dl-value" style="margin-bottom:0;">&mdash;</p>
-      <?php endif; ?>
     </div>
+    <?php endif; ?>
+    <?php if ($attendees['apologies']): ?>
     <div>
       <span class="dl-label">Apologies (<?= count($attendees['apologies']) ?>)</span>
-      <?php if ($attendees['apologies']): ?>
       <p class="dl-value" style="margin-bottom:0;"><?= implode(', ', array_map('e', array_column($attendees['apologies'], 'name'))) ?></p>
-      <?php else: ?>
-      <p class="dl-value" style="margin-bottom:0;">&mdash;</p>
-      <?php endif; ?>
     </div>
+    <?php endif; ?>
   </div>
 </div>
 <?php endif; ?>

@@ -27,20 +27,26 @@ $metaLine = implode(' &middot; ', $metaParts);
 
 $attendeesHtml = '';
 if ($attendees['attending'] || $attendees['apologies']) {
-    $attendingNames = $attendees['attending'] ? implode(', ', array_map('e', array_column($attendees['attending'], 'name'))) : '&mdash;';
-    $apologiesNames = $attendees['apologies'] ? implode(', ', array_map('e', array_column($attendees['apologies'], 'name'))) : '&mdash;';
-    $attendeesHtml = '
-    <table class="attendees-table">
-      <tr>
-        <td class="attendees-cell attendees-cell--border">
+    $showBoth = $attendees['attending'] && $attendees['apologies'];
+    $cellStyle = $showBoth ? '' : ' style="width:100%;"';
+    $cells = '';
+    if ($attendees['attending']) {
+        $attendingNames = implode(', ', array_map('e', array_column($attendees['attending'], 'name')));
+        $cells .= '<td class="attendees-cell' . ($showBoth ? ' attendees-cell--border' : '') . '"' . $cellStyle . '>
           <div class="attendees-label">Attending (' . count($attendees['attending']) . ')</div>
           <div class="attendees-names">' . $attendingNames . '</div>
-        </td>
-        <td class="attendees-cell">
+        </td>';
+    }
+    if ($attendees['apologies']) {
+        $apologiesNames = implode(', ', array_map('e', array_column($attendees['apologies'], 'name')));
+        $cells .= '<td class="attendees-cell"' . $cellStyle . '>
           <div class="attendees-label">Apologies (' . count($attendees['apologies']) . ')</div>
           <div class="attendees-names">' . $apologiesNames . '</div>
-        </td>
-      </tr>
+        </td>';
+    }
+    $attendeesHtml = '
+    <table class="attendees-table">
+      <tr>' . $cells . '</tr>
     </table>';
 }
 
