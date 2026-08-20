@@ -237,7 +237,7 @@ require __DIR__ . '/includes/layout/header.php';
     <section class="card help-card" id="agendas">
       <p class="help-card-label">Features</p>
       <h2>Publishing a meeting agenda</h2>
-      <p class="dl-value">The <a href="<?= APP_URL ?>/agenda/index.php">Agendas</a> page generates a draft agenda from whatever's live right now — overall status, open decisions, open risks and issues, and upcoming or at-risk milestones — as one editable block of text. Nothing is fixed: rewrite it, delete sections, add your own, or hit <strong>Regenerate from current data</strong> to pull a fresh draft (this keeps the title and meeting date you've typed, but replaces the text). Publishing saves it to the archive exactly as you left it, so past agendas stay a record of what was actually in front of the room, not a live query that changes after the fact.</p>
+      <p class="dl-value">The <a href="<?= APP_URL ?>/agenda/index.php">Agendas</a> page generates a draft agenda from whatever's live right now — overall status, open decisions, open risks and issues, and upcoming or at-risk milestones — as one editable block of text. Add a title, meeting date, location, and attendees alongside it. Nothing in the text is fixed: rewrite it, delete sections, add your own, or hit <strong>Regenerate from current data</strong> to pull a fresh draft (this keeps the title, date, location, and attendees you've typed, but replaces the agenda text). Publishing saves it to the archive exactly as you left it, so past agendas stay a record of what was actually in front of the room, not a live query that changes after the fact.</p>
     </section>
 
     <section class="card help-card" id="typical-week">

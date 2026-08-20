@@ -115,6 +115,8 @@ CREATE TABLE IF NOT EXISTS pm_agendas (
   id                  INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
   title               VARCHAR(150)  NOT NULL,
   meeting_date        DATE,
+  location            VARCHAR(150),
+  attendees           TEXT,
   content             TEXT NOT NULL,
   created_by_user_id  INT UNSIGNED,
   created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

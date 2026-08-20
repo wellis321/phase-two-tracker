@@ -33,11 +33,19 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1><?= e($agenda['title']) ?></h1>
     <p class="status-hero-meta">
       Meeting date <?= format_date($agenda['meeting_date']) ?>
+      <?php if ($agenda['location']): ?>&middot; <?= e($agenda['location']) ?><?php endif; ?>
       &middot; Published <?= e(date('j M Y, g:ia', strtotime($agenda['created_at']))) ?>
       by <?= e($agenda['display_name'] ?: $agenda['username'] ?: 'unknown') ?>
     </p>
   </div>
 </div>
+
+<?php if ($agenda['attendees']): ?>
+<div class="card" style="margin-bottom:1rem;">
+  <span class="dl-label">Attendees</span>
+  <p class="dl-value" style="margin-bottom:0;"><?= e($agenda['attendees']) ?></p>
+</div>
+<?php endif; ?>
 
 <div class="card">
   <pre class="agenda-content"><?= e($agenda['content']) ?></pre>

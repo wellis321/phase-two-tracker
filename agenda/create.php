@@ -12,6 +12,8 @@ $db = db();
 $f = [
     'title'        => 'Programme Board',
     'meeting_date' => date('Y-m-d'),
+    'location'     => '',
+    'attendees'    => '',
     'content'      => generate_agenda_draft($db),
 ];
 $errors = [];
@@ -24,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $f['title']        = trim($_POST['title'] ?? '');
     $f['meeting_date'] = $_POST['meeting_date'] ?? '';
+    $f['location']     = trim($_POST['location'] ?? '');
+    $f['attendees']    = trim($_POST['attendees'] ?? '');
     $f['content']      = $_POST['content'] ?? '';
 
     if (isset($_POST['regenerate'])) {
@@ -36,8 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         $db->prepare(
-            'INSERT INTO pm_agendas (title, meeting_date, content, created_by_user_id) VALUES (?, ?, ?, ?)'
-        )->execute([$f['title'], $f['meeting_date'] ?: null, $f['content'], get_current_user_id()]);
+            'INSERT INTO pm_agendas (title, meeting_date, location, attendees, content, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?)'
+        )->execute([
+            $f['title'], $f['meeting_date'] ?: null, $f['location'] ?: null, $f['attendees'] ?: null,
+            $f['content'], get_current_user_id(),
+        ]);
         flash('success', "Agenda '{$f['title']}' published.");
         redirect(APP_URL . '/agenda/index.php');
     }
@@ -69,6 +76,14 @@ require __DIR__ . '/../includes/layout/header.php';
       <div class="field">
         <label for="meeting_date">Meeting date</label>
         <input type="date" id="meeting_date" name="meeting_date" value="<?= e($f['meeting_date']) ?>">
+      </div>
+      <div class="field">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" value="<?= e($f['location']) ?>" placeholder="e.g. Council HQ, Room 4, or a video call link">
+      </div>
+      <div class="field">
+        <label for="attendees">Attendees</label>
+        <textarea id="attendees" name="attendees" placeholder="One per line, or comma-separated"><?= e($f['attendees']) ?></textarea>
       </div>
       <div class="field form-full">
         <label for="content">Agenda</label>
