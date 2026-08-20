@@ -22,6 +22,7 @@ if (!$milestone) {
     flash('error', 'Not found.');
     redirect(APP_URL . '/milestones/index.php');
 }
+$discussionState = get_discussion_state($db, 'milestone', $id, get_current_user_id());
 
 $pageTitle  = $milestone['title'];
 $activePage = 'milestones';
@@ -33,11 +34,12 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1><?= e($milestone['title']) ?></h1>
     <p><span class="pill pill--<?= e($milestone['status']) ?>"><?= e(str_replace('_', ' ', $milestone['status'])) ?></span></p>
   </div>
-  <?php if (is_admin()): ?>
   <div class="page-header-actions">
+    <?= render_flag_button('milestone', $id, $discussionState) ?>
+    <?php if (is_admin()): ?>
     <a href="<?= APP_URL ?>/milestones/edit.php?id=<?= (int)$milestone['id'] ?>" class="btn btn--outline">Edit</a>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 </div>
 
 <div class="card">

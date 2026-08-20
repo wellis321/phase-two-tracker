@@ -196,3 +196,38 @@ CREATE TABLE IF NOT EXISTS pm_taggables (
   KEY idx_taggable (taggable_type, taggable_id),
   CONSTRAINT fk_pm_taggables_tag FOREIGN KEY (tag_id) REFERENCES pm_tags(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Anything a team member has flagged as worth discussing together. One row
+-- per flagged record (flaggable_type/flaggable_id, same polymorphic pattern
+-- as pm_taggables); who flagged it lives in pm_discussion_flags below, so
+-- several people flagging the same thing stack onto one item rather than
+-- creating duplicates. `note` is a shared, editable summary of what the
+-- discussion is actually about — expected to change as understanding does.
+-- Once the team's discussed it, `status` moves to added_to_agenda so it's
+-- picked up by the next agenda draft; `agenda_id` is then set when that
+-- agenda is actually published, recording which meeting it went to.
+CREATE TABLE IF NOT EXISTS pm_discussion_items (
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  flaggable_type  VARCHAR(20)  NOT NULL,
+  flaggable_id    INT UNSIGNED NOT NULL,
+  note            TEXT NULL,
+  status          ENUM('open', 'added_to_agenda') NOT NULL DEFAULT 'open',
+  agenda_id       INT UNSIGNED NULL,
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_flaggable (flaggable_type, flaggable_id),
+  KEY idx_status (status),
+  CONSTRAINT fk_pm_discussion_items_agenda FOREIGN KEY (agenda_id) REFERENCES pm_agendas(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Who flagged a discussion item — their initials show against it, and
+-- unflagging just removes their row rather than the whole item.
+CREATE TABLE IF NOT EXISTS pm_discussion_flags (
+  id                   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  discussion_item_id   INT UNSIGNED NOT NULL,
+  user_id              INT UNSIGNED NOT NULL,
+  created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_flag (discussion_item_id, user_id),
+  CONSTRAINT fk_pm_discussion_flags_item FOREIGN KEY (discussion_item_id) REFERENCES pm_discussion_items(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pm_discussion_flags_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->execute([$f['title'], $f['meeting_date'] ?: null, $f['location'] ?: null, $f['content'], get_current_user_id()]);
         $agendaId = (int)$db->lastInsertId();
         save_agenda_attendees($db, $agendaId, $attendeeRows);
+        $db->prepare("UPDATE pm_discussion_items SET agenda_id = ? WHERE status = 'added_to_agenda' AND agenda_id IS NULL")->execute([$agendaId]);
 
         flash('success', "Agenda '{$f['title']}' published.");
         redirect(APP_URL . '/agenda/index.php');

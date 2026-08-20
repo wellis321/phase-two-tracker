@@ -28,6 +28,7 @@ $taskTags     = get_tags_for($db, 'task', $id);
 $dependencies = get_task_dependencies($db, $id);
 $dependents   = get_task_dependents($db, $id);
 $isBlocked    = $task['status'] !== 'done' && task_is_blocked($dependencies);
+$discussionState = get_discussion_state($db, 'task', $id, get_current_user_id());
 
 $pageTitle  = $task['title'];
 $activePage = 'tasks';
@@ -43,11 +44,12 @@ require __DIR__ . '/../includes/layout/header.php';
     </p>
     <?php if ($taskTags): ?><p><?= render_tag_pills($taskTags) ?></p><?php endif; ?>
   </div>
-  <?php if (is_admin()): ?>
   <div class="page-header-actions">
+    <?= render_flag_button('task', $id, $discussionState) ?>
+    <?php if (is_admin()): ?>
     <a href="<?= APP_URL ?>/tasks/edit.php?id=<?= (int)$task['id'] ?>" class="btn btn--outline">Edit</a>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 </div>
 
 <div class="card">

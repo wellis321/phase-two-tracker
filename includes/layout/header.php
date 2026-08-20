@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($pageTitle ?? 'Dashboard') ?> — Phase 2 Delivery Tracker</title>
+<?php if (is_logged_in()): ?><meta name="csrf-token" content="<?= e(csrf_token()) ?>"><?php endif; ?>
 <?php require __DIR__ . '/favicon.php'; ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +19,7 @@
     </a>
     <?php
     $workPages    = ['tasks', 'risks', 'decisions', 'supplier', 'milestones', 'tags'];
-    $reportsPages = ['updates', 'agendas'];
+    $reportsPages = ['updates', 'agendas', 'discussion'];
     $workActive    = in_array($activePage ?? '', $workPages, true);
     $reportsActive = in_array($activePage ?? '', $reportsPages, true);
     ?>
@@ -44,6 +45,7 @@
         <div class="nav-group-menu">
           <a href="<?= APP_URL ?>/updates/index.php" class="<?= ($activePage ?? '') === 'updates' ? 'nav--active' : '' ?>">Weekly Archive</a>
           <a href="<?= APP_URL ?>/agenda/index.php" class="<?= ($activePage ?? '') === 'agendas' ? 'nav--active' : '' ?>">Agendas</a>
+          <a href="<?= APP_URL ?>/discussion/index.php" class="<?= ($activePage ?? '') === 'discussion' ? 'nav--active' : '' ?>">Discussion</a>
         </div>
       </div>
 

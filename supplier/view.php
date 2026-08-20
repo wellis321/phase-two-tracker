@@ -24,6 +24,7 @@ if (!$activity) {
     flash('error', 'Not found.');
     redirect(APP_URL . '/supplier/index.php');
 }
+$discussionState = get_discussion_state($db, 'supplier', $id, get_current_user_id());
 
 $pageTitle  = $activity['title'];
 $activePage = 'supplier';
@@ -35,11 +36,12 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1><?= e($activity['title']) ?></h1>
     <p><?= e($activity['supplier']) ?> · <span class="pill pill--<?= e($activity['status']) ?>"><?= e(str_replace('_', ' ', $activity['status'])) ?></span></p>
   </div>
-  <?php if (is_admin()): ?>
   <div class="page-header-actions">
+    <?= render_flag_button('supplier', $id, $discussionState) ?>
+    <?php if (is_admin()): ?>
     <a href="<?= APP_URL ?>/supplier/edit.php?id=<?= (int)$activity['id'] ?>" class="btn btn--outline">Edit</a>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 </div>
 
 <div class="card">

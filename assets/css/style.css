@@ -555,6 +555,58 @@ tbody tr:hover td { background: #f8fbf9; }
 .icon-btn:hover { background: var(--green-light); border-color: var(--green); }
 .icon-btn svg { width: 14px; height: 14px; }
 
+.flag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  border: none;
+  background: none;
+  padding: .15rem;
+  cursor: pointer;
+  color: var(--muted);
+  vertical-align: middle;
+  flex: none;
+}
+.flag-btn:hover { color: var(--text); }
+.flag-btn svg { width: 1rem; height: 1rem; }
+.flag-btn--active { color: var(--amber); }
+.flag-btn--active .flag-icon-fill { fill: currentColor; }
+.flag-btn-count { font-size: .72rem; font-weight: 600; }
+.flag-btn:disabled { opacity: .5; cursor: default; }
+
+.discussion-item { margin-bottom: .85rem; }
+.discussion-item-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.discussion-item-title { font-weight: 600; }
+.discussion-flaggers { margin-top: .4rem; font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+.discussion-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green-dark);
+  font-size: .68rem;
+  font-weight: 700;
+  cursor: default;
+}
+.discussion-note { margin-top: .6rem; margin-bottom: .4rem; }
+.discussion-item-actions { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--border); }
+.discussion-note-form textarea {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: .9rem;
+  padding: .55rem .7rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.discussion-note-form textarea:focus { outline: none; border-color: var(--green); }
+
 .table-entity-link { color: inherit; text-decoration: none; font-weight: 500; }
 .table-entity-link:hover { color: var(--green-dark); text-decoration: underline; }
 .table-row--clickable { cursor: pointer; }

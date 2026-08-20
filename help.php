@@ -36,6 +36,7 @@ require __DIR__ . '/includes/layout/header.php';
     <a href="#quick-add">Adding things quickly</a>
     <a href="#agendas">Publishing a meeting agenda</a>
     <a href="#task-dependencies">Task dependencies</a>
+    <a href="#discussion">Flagging things for discussion</a>
     <p class="help-nav-section">Workflow</p>
     <a href="#typical-week">A typical week</a>
   </nav>
@@ -255,6 +256,12 @@ require __DIR__ . '/includes/layout/header.php';
       <p class="help-card-label">Features</p>
       <h2>Task dependencies</h2>
       <p class="dl-value">Any task can depend on other tasks that need finishing first. On the Add/Edit Task form, search for a task by title and add it under <strong>Depends on</strong> — this works by searching as you type rather than listing every task, so it stays usable how many ever exist. A task with an unfinished dependency shows a <strong>Blocked</strong> pill, both in the tasks list and on the task itself, and its detail page lists what it's waiting on ("Depends on") and what's waiting on it ("Blocks") so you can trace either direction.</p>
+    </section>
+
+    <section class="card help-card" id="discussion">
+      <p class="help-card-label">Features</p>
+      <h2>Flagging things for discussion</h2>
+      <p class="dl-value">Anyone signed in can click the flag icon next to a task, milestone, risk/issue, decision, or supplier item — on its own page, or right on the dashboard — to raise it as something worth talking about as a team. Flagging it again removes your flag; if more than one person flags the same thing, everyone's initials show against it, so you can see how many people think it matters. Everything flagged shows up on the <a href="<?= APP_URL ?>/discussion/index.php">Discussion</a> page, where anyone can add or edit a shared note capturing what the discussion is actually about — expected to change as the team learns more. Once it's been talked through, an admin can add it to the next agenda draft, which moves it into a "Raised by the team" section the next time someone generates one; publishing that agenda records which meeting it went to.</p>
     </section>
 
     <section class="card help-card" id="typical-week">

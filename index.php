@@ -82,6 +82,13 @@ $supplierActivity = $db->query(
     "SELECT * FROM pm_supplier_activities WHERE status IN ('planned','in_progress') ORDER BY due_date IS NULL, due_date LIMIT 6"
 )->fetchAll();
 
+$currentUserId = get_current_user_id();
+$riskDiscussion       = get_discussion_states_bulk($db, 'risk', array_column($topRisks, 'id'), $currentUserId);
+$decisionDiscussion    = get_discussion_states_bulk($db, 'decision', array_column($openDecisionsList, 'id'), $currentUserId);
+$supplierDiscussion    = get_discussion_states_bulk($db, 'supplier', array_column($supplierActivity, 'id'), $currentUserId);
+$milestoneDiscussion   = get_discussion_states_bulk($db, 'milestone', array_column($upcomingMilestones, 'id'), $currentUserId);
+$taskDiscussion        = get_discussion_states_bulk($db, 'task', array_column($myTasks, 'id'), $currentUserId);
+
 require __DIR__ . '/includes/layout/header.php';
 ?>
 
@@ -182,7 +189,7 @@ require __DIR__ . '/includes/layout/header.php';
         <?php foreach ($topRisks as $r): ?>
         <li>
           <span class="li-title"><?= rag_badge($r['severity']) ?> <?= e($r['title']) ?></span>
-          <span class="li-meta"><?= e(ucfirst($r['type'])) ?> · <span class="pill pill--<?= e($r['status']) ?>"><?= e(str_replace('_',' ',$r['status'])) ?></span></span>
+          <span class="li-meta"><?= e(ucfirst($r['type'])) ?> · <span class="pill pill--<?= e($r['status']) ?>"><?= e(str_replace('_',' ',$r['status'])) ?></span> <?= render_flag_button('risk', (int)$r['id'], $riskDiscussion[(int)$r['id']] ?? ['flaggedByMe' => false, 'flaggers' => []]) ?></span>
         </li>
         <?php endforeach; ?>
       </ul>
@@ -199,7 +206,7 @@ require __DIR__ . '/includes/layout/header.php';
         <?php foreach ($openDecisionsList as $d): ?>
         <li>
           <span class="li-title"><?= e($d['title']) ?></span>
-          <span class="li-meta">Needed by <?= format_date($d['needed_by_date']) ?></span>
+          <span class="li-meta">Needed by <?= format_date($d['needed_by_date']) ?> <?= render_flag_button('decision', (int)$d['id'], $decisionDiscussion[(int)$d['id']] ?? ['flaggedByMe' => false, 'flaggers' => []]) ?></span>
         </li>
         <?php endforeach; ?>
       </ul>
@@ -216,7 +223,7 @@ require __DIR__ . '/includes/layout/header.php';
         <?php foreach ($supplierActivity as $s): ?>
         <li>
           <span class="li-title"><?= e($s['supplier']) ?>: <?= e($s['title']) ?></span>
-          <span class="li-meta"><span class="pill pill--<?= e($s['status']) ?>"><?= e(str_replace('_',' ',$s['status'])) ?></span> · <?= format_date($s['due_date']) ?></span>
+          <span class="li-meta"><span class="pill pill--<?= e($s['status']) ?>"><?= e(str_replace('_',' ',$s['status'])) ?></span> · <?= format_date($s['due_date']) ?> <?= render_flag_button('supplier', (int)$s['id'], $supplierDiscussion[(int)$s['id']] ?? ['flaggedByMe' => false, 'flaggers' => []]) ?></span>
         </li>
         <?php endforeach; ?>
       </ul>
@@ -235,7 +242,7 @@ require __DIR__ . '/includes/layout/header.php';
         <?php foreach ($upcomingMilestones as $m): ?>
         <li>
           <span class="li-title"><?= e($m['title']) ?></span>
-          <span class="li-meta"><span class="pill pill--<?= e($m['status']) ?>"><?= e(str_replace('_',' ',$m['status'])) ?></span> · <?= format_date($m['target_date']) ?></span>
+          <span class="li-meta"><span class="pill pill--<?= e($m['status']) ?>"><?= e(str_replace('_',' ',$m['status'])) ?></span> · <?= format_date($m['target_date']) ?> <?= render_flag_button('milestone', (int)$m['id'], $milestoneDiscussion[(int)$m['id']] ?? ['flaggedByMe' => false, 'flaggers' => []]) ?></span>
         </li>
         <?php endforeach; ?>
       </ul>
@@ -249,7 +256,7 @@ require __DIR__ . '/includes/layout/header.php';
         <?php foreach ($myTasks as $t): ?>
         <li>
           <span class="li-title"><?= e($t['title']) ?></span>
-          <span class="li-meta"><span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_',' ',$t['status'])) ?></span> · <?= format_date($t['due_date']) ?></span>
+          <span class="li-meta"><span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_',' ',$t['status'])) ?></span> · <?= format_date($t['due_date']) ?> <?= render_flag_button('task', (int)$t['id'], $taskDiscussion[(int)$t['id']] ?? ['flaggedByMe' => false, 'flaggers' => []]) ?></span>
         </li>
         <?php endforeach; ?>
       </ul>

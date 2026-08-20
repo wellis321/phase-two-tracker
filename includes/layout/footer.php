@@ -80,6 +80,9 @@
   </div>
 </footer>
 <script src="<?= asset_url('/assets/js/main.js') ?>"></script>
+<?php if (is_logged_in()): ?>
+<script src="<?= asset_url('/assets/js/discussion-flag.js') ?>"></script>
+<?php endif; ?>
 <?php if (is_logged_in() && is_admin()): ?>
 <script src="<?= asset_url('/assets/js/quick-add.js') ?>"></script>
 <?php endif; ?>

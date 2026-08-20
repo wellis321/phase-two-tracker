@@ -114,6 +114,11 @@ function icon_checkmark_badge(): string
     return '<svg viewBox="0 0 32 32" role="img" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#006A51"/><path d="M9 16.5l4.5 4.5L23 11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
+function icon_flag(): string
+{
+    return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17.5V3"/><path class="flag-icon-fill" d="M5 3.5c1.6-1.1 3.6-1.1 5.2 0 1.5 1 3.3 1 4.8 0v7.6c-1.5 1-3.3 1-4.8 0-1.6-1.1-3.6-1.1-5.2 0z"/></svg>';
+}
+
 function format_date(?string $date): string
 {
     if (!$date) return '—';
@@ -384,6 +389,275 @@ function render_task_dependency_chips(array $dependencyTasks): string
     return $out;
 }
 
+/** Initials for a person's display name (falls back to username), e.g. "William Ellis" -> "WE". */
+function user_initials(?string $displayName, ?string $username): string
+{
+    $source = trim((string)($displayName ?: $username));
+    if ($source === '') return '?';
+    $words = preg_split('/\s+/', $source) ?: [$source];
+    if (count($words) >= 2) {
+        return strtoupper(mb_substr($words[0], 0, 1) . mb_substr($words[count($words) - 1], 0, 1));
+    }
+    return strtoupper(mb_substr($source, 0, 2));
+}
+
+/** Record types that can be flagged for discussion, and where to link back to them. */
+function discussion_flaggable_types(): array
+{
+    return [
+        'task'      => ['table' => 'pm_tasks',             'url' => 'tasks/view.php'],
+        'milestone' => ['table' => 'pm_milestones',         'url' => 'milestones/view.php'],
+        'risk'      => ['table' => 'pm_risks_issues',       'url' => 'risks/view.php'],
+        'decision'  => ['table' => 'pm_decisions',          'url' => 'decisions/view.php'],
+        'supplier'  => ['table' => 'pm_supplier_activities', 'url' => 'supplier/view.php'],
+    ];
+}
+
+/**
+ * Discussion-flag state for one record: whether the current user has
+ * flagged it, everyone who has, and the shared note/status if so.
+ * @return array{itemId:?int, flaggedByMe:bool, flaggers:array<int,array{id:int,name:string,initials:string}>, note:?string, status:?string}
+ */
+function get_discussion_state(PDO $db, string $type, int $id, int $currentUserId): array
+{
+    $stmt = $db->prepare(
+        'SELECT di.id, di.note, di.status, f.user_id, u.display_name, u.username
+         FROM pm_discussion_items di
+         LEFT JOIN pm_discussion_flags f ON f.discussion_item_id = di.id
+         LEFT JOIN users u ON u.id = f.user_id
+         WHERE di.flaggable_type = ? AND di.flaggable_id = ?
+         ORDER BY u.display_name, u.username'
+    );
+    $stmt->execute([$type, $id]);
+    $rows = $stmt->fetchAll();
+
+    if (!$rows) {
+        return ['itemId' => null, 'flaggedByMe' => false, 'flaggers' => [], 'note' => null, 'status' => null];
+    }
+
+    $flaggers    = [];
+    $flaggedByMe = false;
+    foreach ($rows as $r) {
+        if ($r['user_id'] === null) continue;
+        $flaggers[] = [
+            'id'       => (int)$r['user_id'],
+            'name'     => $r['display_name'] ?: $r['username'],
+            'initials' => user_initials($r['display_name'], $r['username']),
+        ];
+        if ((int)$r['user_id'] === $currentUserId) $flaggedByMe = true;
+    }
+    return [
+        'itemId'      => (int)$rows[0]['id'],
+        'flaggedByMe' => $flaggedByMe,
+        'flaggers'    => $flaggers,
+        'note'        => $rows[0]['note'],
+        'status'      => $rows[0]['status'],
+    ];
+}
+
+/**
+ * Batch version of get_discussion_state() for list pages, keyed by
+ * flaggable_id, so a page with N rows doesn't run N queries.
+ * @param int[] $ids
+ * @return array<int, array{itemId:int, flaggedByMe:bool, flaggers:array<int,array{id:int,name:string,initials:string}>, note:?string, status:string}>
+ */
+function get_discussion_states_bulk(PDO $db, string $type, array $ids, int $currentUserId): array
+{
+    $ids = array_values(array_unique(array_map('intval', $ids)));
+    if (!$ids) return [];
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $db->prepare(
+        "SELECT di.id, di.flaggable_id, di.note, di.status, f.user_id, u.display_name, u.username
+         FROM pm_discussion_items di
+         LEFT JOIN pm_discussion_flags f ON f.discussion_item_id = di.id
+         LEFT JOIN users u ON u.id = f.user_id
+         WHERE di.flaggable_type = ? AND di.flaggable_id IN ($placeholders)
+         ORDER BY u.display_name, u.username"
+    );
+    $stmt->execute([$type, ...$ids]);
+
+    $out = [];
+    foreach ($stmt->fetchAll() as $r) {
+        $fid = (int)$r['flaggable_id'];
+        if (!isset($out[$fid])) {
+            $out[$fid] = ['itemId' => (int)$r['id'], 'flaggedByMe' => false, 'flaggers' => [], 'note' => $r['note'], 'status' => $r['status']];
+        }
+        if ($r['user_id'] !== null) {
+            $out[$fid]['flaggers'][] = [
+                'id'       => (int)$r['user_id'],
+                'name'     => $r['display_name'] ?: $r['username'],
+                'initials' => user_initials($r['display_name'], $r['username']),
+            ];
+            if ((int)$r['user_id'] === $currentUserId) $out[$fid]['flaggedByMe'] = true;
+        }
+    }
+    return $out;
+}
+
+/**
+ * Toggles the current user's flag on a record. Creates the discussion item
+ * on first flag; removes it again if unflagging leaves it with no flags,
+ * no note, and still open — i.e. nobody's said anything about it yet.
+ * @return array{itemId:?int, flaggedByMe:bool, flaggers:array<int,array{id:int,name:string,initials:string}>, note:?string, status:?string}
+ */
+function toggle_discussion_flag(PDO $db, string $type, int $id, int $userId): array
+{
+    $stmt = $db->prepare('SELECT id, note, status FROM pm_discussion_items WHERE flaggable_type = ? AND flaggable_id = ?');
+    $stmt->execute([$type, $id]);
+    $item = $stmt->fetch();
+
+    if (!$item) {
+        $db->prepare('INSERT INTO pm_discussion_items (flaggable_type, flaggable_id) VALUES (?, ?)')->execute([$type, $id]);
+        $itemId = (int)$db->lastInsertId();
+        $db->prepare('INSERT INTO pm_discussion_flags (discussion_item_id, user_id) VALUES (?, ?)')->execute([$itemId, $userId]);
+        return get_discussion_state($db, $type, $id, $userId);
+    }
+
+    $itemId = (int)$item['id'];
+    $already = $db->prepare('SELECT id FROM pm_discussion_flags WHERE discussion_item_id = ? AND user_id = ?');
+    $already->execute([$itemId, $userId]);
+
+    if ($already->fetch()) {
+        $db->prepare('DELETE FROM pm_discussion_flags WHERE discussion_item_id = ? AND user_id = ?')->execute([$itemId, $userId]);
+        $countStmt = $db->prepare('SELECT COUNT(*) FROM pm_discussion_flags WHERE discussion_item_id = ?');
+        $countStmt->execute([$itemId]);
+        $remaining = (int)$countStmt->fetchColumn();
+        if ($remaining === 0 && $item['status'] === 'open' && trim((string)$item['note']) === '') {
+            $db->prepare('DELETE FROM pm_discussion_items WHERE id = ?')->execute([$itemId]);
+        }
+    } else {
+        $db->prepare('INSERT INTO pm_discussion_flags (discussion_item_id, user_id) VALUES (?, ?)')->execute([$itemId, $userId]);
+    }
+
+    return get_discussion_state($db, $type, $id, $userId);
+}
+
+/** The flag toggle button shown on record view pages and list rows. */
+function render_flag_button(string $type, int $id, array $state): string
+{
+    $names = array_map(fn($f) => $f['name'], $state['flaggers']);
+    $title = $names ? 'Flagged by ' . implode(', ', $names) : 'Flag for discussion';
+    $count = count($state['flaggers']);
+    return '<button type="button" class="flag-btn' . (!empty($state['flaggedByMe']) ? ' flag-btn--active' : '') . '"'
+         . ' data-flag-type="' . e($type) . '" data-flag-id="' . $id . '" data-endpoint="' . APP_URL . '/discussion/toggle.php"'
+         . ' aria-pressed="' . (!empty($state['flaggedByMe']) ? 'true' : 'false') . '" title="' . e($title) . '">'
+         . icon_flag()
+         . ($count > 0 ? '<span class="flag-btn-count">' . $count . '</span>' : '')
+         . '</button>';
+}
+
+/** Human label for a discussion-flag type value. */
+function discussion_type_label(string $type): string
+{
+    return ['task' => 'Task', 'milestone' => 'Milestone', 'risk' => 'Risk/Issue', 'decision' => 'Decision', 'supplier' => 'Supplier'][$type] ?? ucfirst($type);
+}
+
+/**
+ * All discussion items with a given status, joined to their record's title
+ * and their flaggers. Used by the Discussion page.
+ * @return array<int, array{itemId:int, type:string, flaggableId:int, title:string, url:string, note:?string, status:string, agendaId:?int, updatedAt:string, flaggers:array<int,array{id:int,name:string,initials:string}>}>
+ */
+function get_discussion_items(PDO $db, string $status): array
+{
+    $items = [];
+    foreach (discussion_flaggable_types() as $type => $conf) {
+        $stmt = $db->prepare(
+            "SELECT di.id AS item_id, di.note, di.status, di.agenda_id, di.updated_at, r.id AS record_id, r.title
+             FROM pm_discussion_items di
+             JOIN {$conf['table']} r ON r.id = di.flaggable_id
+             WHERE di.flaggable_type = ? AND di.status = ?"
+        );
+        $stmt->execute([$type, $status]);
+        foreach ($stmt->fetchAll() as $row) {
+            $items[(int)$row['item_id']] = [
+                'itemId'      => (int)$row['item_id'],
+                'type'        => $type,
+                'flaggableId' => (int)$row['record_id'],
+                'title'       => $row['title'],
+                'url'         => APP_URL . '/' . $conf['url'] . '?id=' . (int)$row['record_id'],
+                'note'        => $row['note'],
+                'status'      => $row['status'],
+                'agendaId'    => $row['agenda_id'] !== null ? (int)$row['agenda_id'] : null,
+                'updatedAt'   => $row['updated_at'],
+                'flaggers'    => [],
+            ];
+        }
+    }
+    if (!$items) return [];
+
+    $ids = implode(',', array_keys($items));
+    $flagRows = $db->query(
+        "SELECT f.discussion_item_id, u.id AS user_id, u.display_name, u.username
+         FROM pm_discussion_flags f
+         JOIN users u ON u.id = f.user_id
+         WHERE f.discussion_item_id IN ($ids)
+         ORDER BY u.display_name, u.username"
+    )->fetchAll();
+    foreach ($flagRows as $r) {
+        $itemId = (int)$r['discussion_item_id'];
+        if (!isset($items[$itemId])) continue;
+        $items[$itemId]['flaggers'][] = [
+            'id'       => (int)$r['user_id'],
+            'name'     => $r['display_name'] ?: $r['username'],
+            'initials' => user_initials($r['display_name'], $r['username']),
+        ];
+    }
+
+    $items = array_values($items);
+    usort($items, fn($a, $b) => strcmp($b['updatedAt'], $a['updatedAt']));
+    return $items;
+}
+
+/** One card in the Discussion list: title/link, flag button, flaggers, editable note, and (admin) the agenda-queue action. */
+function render_discussion_item_card(array $item, int $currentUserId, bool $queued): string
+{
+    $state = [
+        'flaggedByMe' => (bool)array_filter($item['flaggers'], fn($f) => $f['id'] === $currentUserId),
+        'flaggers'    => $item['flaggers'],
+    ];
+
+    $out = '<div class="card discussion-item" data-discussion-row>';
+    $out .= '<div class="discussion-item-head">';
+    $out .= '<span class="pill">' . e(discussion_type_label($item['type'])) . '</span> ';
+    $out .= '<a href="' . e($item['url']) . '" class="table-entity-link discussion-item-title">' . e($item['title']) . '</a> ';
+    $out .= render_flag_button($item['type'], $item['flaggableId'], $state);
+    $out .= '</div>';
+
+    if ($item['flaggers']) {
+        $out .= '<div class="discussion-flaggers">Raised by ';
+        foreach ($item['flaggers'] as $f) {
+            $out .= '<span class="discussion-initial" title="' . e($f['name']) . '">' . e($f['initials']) . '</span>';
+        }
+        $out .= '</div>';
+    }
+
+    $out .= '<div class="editable-wrap">';
+    $out .= '<div class="editable-view">';
+    $out .= '<p class="dl-value discussion-note' . ($item['note'] ? '' : ' empty-note') . '">' . ($item['note'] ? e($item['note']) : 'No note yet.') . '</p>';
+    $out .= '<button type="button" class="btn btn--outline btn--sm" data-edit-toggle>Edit note</button>';
+    $out .= '</div>';
+    $out .= '<form method="POST" action="" class="editable-form discussion-note-form" hidden>';
+    $out .= csrf_field();
+    $out .= '<input type="hidden" name="item_id" value="' . $item['itemId'] . '">';
+    $out .= '<textarea name="note" rows="3" placeholder="What\'s this actually about? Add context as the team learns more.">' . e((string)$item['note']) . '</textarea>';
+    $out .= '<div class="form-actions" style="margin-top:.5rem; padding-top:0; border-top:none;">';
+    $out .= '<button type="submit" name="save_note" value="1" class="btn btn--primary btn--sm">Save note</button>';
+    $out .= '<button type="button" class="btn btn--outline btn--sm" data-edit-cancel>Cancel</button>';
+    $out .= '</div></form></div>';
+
+    if (is_admin()) {
+        $out .= '<form method="POST" action="" class="discussion-item-actions">';
+        $out .= csrf_field();
+        $out .= '<input type="hidden" name="item_id" value="' . $item['itemId'] . '">';
+        $out .= $queued
+            ? '<button type="submit" name="return_to_open" value="1" class="btn btn--outline btn--sm">Move back to open discussion</button>'
+            : '<button type="submit" name="add_to_agenda" value="1" class="btn btn--outline btn--sm">Add to next agenda</button>';
+        $out .= '</form>';
+    }
+
+    return $out . '</div>';
+}
+
 /**
  * Drafts a plain-text meeting agenda from current status, open decisions,
  * open risks/issues, and upcoming/at-risk milestones. Meant to be edited
@@ -477,10 +751,35 @@ function generate_agenda_draft(PDO $db): string
     }
     $lines[] = '';
 
-    $lines[] = '5. ANY OTHER BUSINESS';
+    $flaggableTypes = discussion_flaggable_types();
+    $raised = [];
+    foreach ($flaggableTypes as $type => $conf) {
+        $rows = $db->prepare(
+            "SELECT r.title FROM pm_discussion_items di
+             JOIN {$conf['table']} r ON r.id = di.flaggable_id
+             WHERE di.flaggable_type = ? AND di.status = 'added_to_agenda' AND di.agenda_id IS NULL
+             ORDER BY di.updated_at"
+        );
+        $rows->execute([$type]);
+        foreach ($rows->fetchAll(PDO::FETCH_COLUMN) as $title) {
+            $raised[] = $title;
+        }
+    }
+
+    $lines[] = '5. RAISED BY THE TEAM';
+    if ($raised) {
+        foreach ($raised as $title) {
+            $lines[] = '   - ' . $title;
+        }
+    } else {
+        $lines[] = '   - Nothing queued from the discussion list.';
+    }
+    $lines[] = '';
+
+    $lines[] = '6. ANY OTHER BUSINESS';
     $lines[] = '';
     $lines[] = '';
-    $lines[] = '6. NEXT MEETING';
+    $lines[] = '7. NEXT MEETING';
     $lines[] = '';
 
     return implode("\n", $lines);

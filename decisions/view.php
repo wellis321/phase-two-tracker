@@ -24,6 +24,7 @@ if (!$decision) {
     flash('error', 'Not found.');
     redirect(APP_URL . '/decisions/index.php');
 }
+$discussionState = get_discussion_state($db, 'decision', $id, get_current_user_id());
 
 $pageTitle  = $decision['title'];
 $activePage = 'decisions';
@@ -35,11 +36,12 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1><?= e($decision['title']) ?></h1>
     <p><span class="pill pill--<?= e($decision['status']) ?>"><?= e($decision['status']) ?></span></p>
   </div>
-  <?php if (is_admin()): ?>
   <div class="page-header-actions">
+    <?= render_flag_button('decision', $id, $discussionState) ?>
+    <?php if (is_admin()): ?>
     <a href="<?= APP_URL ?>/decisions/edit.php?id=<?= (int)$decision['id'] ?>" class="btn btn--outline">Edit</a>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 </div>
 
 <div class="card">

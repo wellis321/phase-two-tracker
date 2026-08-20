@@ -24,6 +24,7 @@ if (!$risk) {
     flash('error', 'Not found.');
     redirect(APP_URL . '/risks/index.php');
 }
+$discussionState = get_discussion_state($db, 'risk', $id, get_current_user_id());
 
 $pageTitle  = $risk['title'];
 $activePage = 'risks';
@@ -35,11 +36,12 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1><?= e($risk['title']) ?></h1>
     <p><?= rag_badge($risk['severity']) ?> <?= e(ucfirst($risk['type'])) ?> · <span class="pill pill--<?= e($risk['status']) ?>"><?= e($risk['status']) ?></span></p>
   </div>
-  <?php if (is_admin()): ?>
   <div class="page-header-actions">
+    <?= render_flag_button('risk', $id, $discussionState) ?>
+    <?php if (is_admin()): ?>
     <a href="<?= APP_URL ?>/risks/edit.php?id=<?= (int)$risk['id'] ?>" class="btn btn--outline">Edit</a>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 </div>
 
 <div class="card">
