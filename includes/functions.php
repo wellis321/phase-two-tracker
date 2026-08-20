@@ -253,15 +253,46 @@ function render_tag_pills(array $tags): string
  */
 function render_tag_checkboxes(array $tree, array $selectedTagIds, string $namePrefix = 'tag_ids'): string
 {
-    $flat = flatten_tag_tree($tree);
-    if (!$flat) return '<p class="empty-note">No tags set up yet.</p>';
-    $out = '<div class="tag-picker">';
-    foreach ($flat as $t) {
-        $checked = in_array($t['id'], $selectedTagIds, true) ? ' checked' : '';
-        $out .= '<label class="tag-picker-option" style="padding-left:' . ($t['depth'] * 1.15) . 'rem;">'
-              . '<input type="checkbox" name="' . e($namePrefix) . '[]" value="' . (int)$t['id'] . '"' . $checked . '> ' . e($t['name']) . '</label>';
+    if (!$tree) return '<p class="empty-note">No tags set up yet.</p>';
+    return '<div class="tag-picker">' . render_tag_checkbox_nodes($tree, $selectedTagIds, $namePrefix) . '</div>';
+}
+
+/** Only the top level is shown open; branches with a selected descendant start expanded too. */
+function render_tag_checkbox_nodes(array $nodes, array $selectedTagIds, string $namePrefix): string
+{
+    $out = '';
+    foreach ($nodes as $node) {
+        $hasChildren = !empty($node['children']);
+        $checked     = in_array($node['id'], $selectedTagIds, true) ? ' checked' : '';
+        $expanded    = $hasChildren && tag_node_has_selected_descendant($node['children'], $selectedTagIds);
+
+        $out .= '<div class="tag-picker-group">';
+        $out .= '<div class="tag-picker-row">';
+        if ($hasChildren) {
+            $out .= '<button type="button" class="tag-picker-toggle" aria-expanded="' . ($expanded ? 'true' : 'false') . '">'
+                  . '<span class="tag-picker-toggle-glyph">' . ($expanded ? '&#9662;' : '&#9656;') . '</span>'
+                  . '<span class="sr-only">Toggle ' . e($node['name']) . ' sub-tags</span></button>';
+        } else {
+            $out .= '<span class="tag-picker-spacer" aria-hidden="true"></span>';
+        }
+        $out .= '<label class="tag-picker-option"><input type="checkbox" name="' . e($namePrefix) . '[]" value="' . (int)$node['id'] . '"' . $checked . '> ' . e($node['name']) . '</label>';
+        $out .= '</div>';
+        if ($hasChildren) {
+            $out .= '<div class="tag-picker-children"' . ($expanded ? '' : ' hidden') . '>'
+                  . render_tag_checkbox_nodes($node['children'], $selectedTagIds, $namePrefix) . '</div>';
+        }
+        $out .= '</div>';
     }
-    return $out . '</div>';
+    return $out;
+}
+
+function tag_node_has_selected_descendant(array $nodes, array $selectedTagIds): bool
+{
+    foreach ($nodes as $node) {
+        if (in_array($node['id'], $selectedTagIds, true)) return true;
+        if (!empty($node['children']) && tag_node_has_selected_descendant($node['children'], $selectedTagIds)) return true;
+    }
+    return false;
 }
 
 function days_until(?string $date): ?int

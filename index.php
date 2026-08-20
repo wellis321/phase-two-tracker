@@ -111,6 +111,7 @@ require __DIR__ . '/includes/layout/header.php';
         <span class="status-history-cell status-history-cell--<?= e($lvl) ?>" title="<?= e($h['period_label']) ?> &mdash; <?= e(ucfirst($lvl)) ?> &mdash; <?= e(date('j M Y', strtotime($h['created_at']))) ?>"><?= $letter ?></span>
         <?php endforeach; ?>
       </div>
+      <div class="status-history-arrow" aria-hidden="true"><span class="status-history-arrow-line"></span><span class="status-history-arrow-head"></span></div>
       <span class="status-history-legend-compact">R off track &middot; A at risk &middot; G on track</span>
     </div>
     <?php endif; ?>

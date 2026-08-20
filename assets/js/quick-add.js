@@ -69,6 +69,21 @@
 
   function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
+  function renderTagNodes(nodes) {
+    return nodes.map(function (t) {
+      var hasChildren = t.children && t.children.length > 0;
+      var toggle = hasChildren
+        ? '<button type="button" class="tag-picker-toggle" aria-expanded="false"><span class="tag-picker-toggle-glyph">&#9656;</span><span class="sr-only">Toggle ' + escapeHtml(t.name) + ' sub-tags</span></button>'
+        : '<span class="tag-picker-spacer" aria-hidden="true"></span>';
+      var row = '<div class="tag-picker-row">' + toggle +
+        '<label class="tag-picker-option"><input type="checkbox" name="tag_ids[]" value="' + t.id + '"> ' + escapeHtml(t.name) + '</label></div>';
+      var children = hasChildren
+        ? '<div class="tag-picker-children" hidden>' + renderTagNodes(t.children) + '</div>'
+        : '';
+      return '<div class="tag-picker-group">' + row + children + '</div>';
+    }).join('');
+  }
+
   function loadTags() {
     if (tagsLoaded) return;
     tagsLoaded = true;
@@ -82,10 +97,7 @@
           picker.innerHTML = '<p class="empty-note">No tags set up yet.</p>';
           return;
         }
-        picker.innerHTML = tags.map(function (t) {
-          var indent = (t.depth * 1.15) + 'rem';
-          return '<label class="tag-picker-option" style="padding-left:' + indent + ';"><input type="checkbox" name="tag_ids[]" value="' + t.id + '"> ' + escapeHtml(t.name) + '</label>';
-        }).join('');
+        picker.innerHTML = renderTagNodes(tags);
       })
       .catch(function () { picker.innerHTML = ''; });
   }

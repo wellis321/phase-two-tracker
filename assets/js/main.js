@@ -49,6 +49,22 @@ document.querySelectorAll('[data-hide-self]').forEach(function (btn) {
   });
 });
 
+// Tag picker: top-level tags are shown open, branches collapse behind a
+// toggle. Delegated on document so it also covers pickers injected later
+// (e.g. the quick-add dialog's tag list, loaded via fetch).
+document.addEventListener('click', function (e) {
+  var toggle = e.target.closest('.tag-picker-toggle');
+  if (!toggle) return;
+  var group = toggle.closest('.tag-picker-group');
+  var children = group && group.querySelector(':scope > .tag-picker-children');
+  if (!children) return;
+  var expanded = toggle.getAttribute('aria-expanded') === 'true';
+  children.hidden = expanded;
+  toggle.setAttribute('aria-expanded', String(!expanded));
+  var glyph = toggle.querySelector('.tag-picker-toggle-glyph');
+  if (glyph) glyph.textContent = expanded ? '▸' : '▾';
+});
+
 // Nav dropdown groups (Work / Reports): click the toggle to open, click
 // elsewhere or press Escape to close. Only one group open at a time.
 document.querySelectorAll('[data-nav-toggle]').forEach(function (toggle) {

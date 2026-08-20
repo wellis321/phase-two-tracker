@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'users')
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'tags') {
-    echo json_encode(['tags' => flatten_tag_tree(get_tag_tree($db))]);
+    echo json_encode(['tags' => get_tag_tree($db)]);
     exit;
 }
 

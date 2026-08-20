@@ -43,29 +43,36 @@
 
   function hideResults() { results.hidden = true; results.innerHTML = ''; }
 
-  function renderResults(tasks) {
+  function renderResults(tasks, isDefault) {
+    var label = isDefault ? '<div class="dep-search-label">Recently updated — or start typing to search</div>' : '';
     if (!tasks.length) {
-      results.innerHTML = '<div class="dep-search-empty">No matching tasks.</div>';
+      results.innerHTML = label + '<div class="dep-search-empty">No matching tasks.</div>';
       results.hidden = false;
       return;
     }
-    results.innerHTML = tasks.map(function (t) {
+    results.innerHTML = label + tasks.map(function (t) {
       return '<div class="dep-search-result" data-id="' + t.id + '" data-title="' + t.title.replace(/"/g, '&quot;') + '" data-status="' + t.status + '">' +
         t.title.replace(/&/g, '&amp;').replace(/</g, '&lt;') + ' <span class="dep-picker-status">(' + statusLabel(t.status) + ')</span></div>';
     }).join('');
     results.hidden = false;
   }
 
+  function fetchAndRender(q) {
+    fetch(searchUrl + '?q=' + encodeURIComponent(q) + '&exclude=' + excludeId, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { renderResults(data.tasks || [], !!data.isDefault); })
+      .catch(hideResults);
+  }
+
+  input.addEventListener('focus', function () {
+    if (input.value.trim() === '') fetchAndRender('');
+  });
+
   input.addEventListener('input', function () {
     var q = input.value.trim();
     clearTimeout(debounceTimer);
-    if (q === '') { hideResults(); return; }
-    debounceTimer = setTimeout(function () {
-      fetch(searchUrl + '?q=' + encodeURIComponent(q) + '&exclude=' + excludeId, { credentials: 'same-origin' })
-        .then(function (r) { return r.json(); })
-        .then(function (data) { renderResults(data.tasks || []); })
-        .catch(hideResults);
-    }, 250);
+    if (q === '') { fetchAndRender(''); return; }
+    debounceTimer = setTimeout(function () { fetchAndRender(q); }, 250);
   });
 
   results.addEventListener('click', function (e) {
