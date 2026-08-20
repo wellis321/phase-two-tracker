@@ -593,6 +593,7 @@ tbody tr:hover td { background: #f8fbf9; }
 }
 .discussion-note { margin-top: .6rem; margin-bottom: .4rem; }
 .discussion-item-actions { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--border); }
+.discussion-include-checkbox { width: auto; height: auto; margin: 0; padding: 0; border: none; background: none; flex: none; }
 .discussion-note-form textarea {
   display: block;
   width: 100%;

@@ -18,6 +18,8 @@ $f = [
     'meeting_date' => date('Y-m-d'),
     'location'     => '',
     'content'      => generate_agenda_draft($db),
+    'kind'         => 'main',
+    'includeIds'   => [],
 ];
 $attendeeRows = []; // array of ['user_id'=>?int, 'name'=>string, 'status'=>'attending'|'apologies']
 $errors = [];
@@ -28,10 +30,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         goto render;
     }
 
+    if (isset($_POST['generate_discussion'])) {
+        $includeIds = array_map('intval', $_POST['include_ids'] ?? []);
+        $f['title']        = 'Team Discussion — ' . date('j M Y');
+        $f['meeting_date'] = date('Y-m-d');
+        $f['location']     = '';
+        $f['kind']         = 'discussion';
+        $f['includeIds']   = $includeIds;
+        $f['content']      = generate_discussion_agenda_draft($db, $includeIds);
+        goto render;
+    }
+
     $f['title']        = trim($_POST['title'] ?? '');
     $f['meeting_date'] = $_POST['meeting_date'] ?? '';
     $f['location']     = trim($_POST['location'] ?? '');
     $f['content']      = $_POST['content'] ?? '';
+    $f['kind']         = ($_POST['agenda_kind'] ?? '') === 'discussion' ? 'discussion' : 'main';
+    $f['includeIds']   = array_map('intval', $_POST['include_ids'] ?? []);
 
     $postUids     = $_POST['attendee_user_id'] ?? [];
     $postNames    = $_POST['attendee_name'] ?? [];
@@ -48,7 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['regenerate'])) {
-        $f['content'] = generate_agenda_draft($db);
+        $f['content'] = $f['kind'] === 'discussion'
+            ? generate_discussion_agenda_draft($db, $f['includeIds'])
+            : generate_agenda_draft($db);
         goto render;
     }
 
@@ -61,7 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->execute([$f['title'], $f['meeting_date'] ?: null, $f['location'] ?: null, $f['content'], get_current_user_id()]);
         $agendaId = (int)$db->lastInsertId();
         save_agenda_attendees($db, $agendaId, $attendeeRows);
-        $db->prepare("UPDATE pm_discussion_items SET agenda_id = ? WHERE status = 'added_to_agenda' AND agenda_id IS NULL")->execute([$agendaId]);
+        if ($f['kind'] !== 'discussion') {
+            $db->prepare("UPDATE pm_discussion_items SET agenda_id = ? WHERE status = 'added_to_agenda' AND agenda_id IS NULL")->execute([$agendaId]);
+        }
 
         flash('success', "Agenda '{$f['title']}' published.");
         redirect(APP_URL . '/agenda/index.php');
@@ -77,7 +96,9 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="page-header">
   <div>
     <h1>Generate agenda</h1>
-    <p>Drafted from current status, decisions, risks, and milestones. Edit anything below before publishing.</p>
+    <p><?= $f['kind'] === 'discussion'
+      ? 'Drafted from the discussion topics you selected. Edit anything below before publishing.'
+      : 'Drafted from current status, decisions, risks, and milestones. Edit anything below before publishing.' ?></p>
   </div>
 </div>
 
@@ -86,6 +107,10 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="card">
   <form method="POST" action="" id="agenda-form">
     <?= csrf_field() ?>
+    <input type="hidden" name="agenda_kind" value="<?= e($f['kind']) ?>">
+    <?php foreach ($f['includeIds'] as $includeId): ?>
+    <input type="hidden" name="include_ids[]" value="<?= (int)$includeId ?>">
+    <?php endforeach; ?>
     <div class="form-grid">
       <div class="field">
         <label for="title">Title</label>

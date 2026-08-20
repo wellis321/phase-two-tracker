@@ -44,15 +44,27 @@ $activePage = 'discussion';
 require __DIR__ . '/../includes/layout/header.php';
 ?>
 
+<?php if (is_admin() && $openItems): ?>
+<form id="discussion-agenda-form" method="POST" action="<?= APP_URL ?>/agenda/create.php"><?= csrf_field() ?><input type="hidden" name="generate_discussion" value="1"></form>
+<?php endif; ?>
+
 <div class="page-header">
   <div>
     <h1>Discussion</h1>
-    <p>Anything flagged by the team as worth talking about. Flag something from its page or the dashboard; once you've discussed it, an admin can add it to the next agenda draft.</p>
+    <p>Anything flagged by the team as worth talking about. Flag something from its page or the dashboard; once you've discussed it, an admin can add it to the next agenda draft, or generate a standalone agenda just for talking through what's on this list.</p>
   </div>
+  <?php if (is_admin() && $openItems): ?>
+  <div class="page-header-actions">
+    <button type="submit" form="discussion-agenda-form" class="btn btn--primary">Generate discussion agenda</button>
+  </div>
+  <?php endif; ?>
 </div>
 
 <h2>Flagged for discussion</h2>
 <?php if ($openItems): ?>
+<?php if (is_admin()): ?>
+<p class="empty-note" style="margin-top:-.5rem;">All items below are included in the discussion agenda by default — untick any you'd like to leave out.</p>
+<?php endif; ?>
 <?php foreach ($openItems as $item): ?>
 <?= render_discussion_item_card($item, $currentUserId, false) ?>
 <?php endforeach; ?>

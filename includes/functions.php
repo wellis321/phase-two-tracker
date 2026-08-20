@@ -618,6 +618,11 @@ function render_discussion_item_card(array $item, int $currentUserId, bool $queu
 
     $out = '<div class="card discussion-item" data-discussion-row>';
     $out .= '<div class="discussion-item-head">';
+    if (!$queued && is_admin()) {
+        $out .= '<input type="checkbox" class="discussion-include-checkbox" name="include_ids[]" value="' . $item['itemId'] . '"'
+              . ' form="discussion-agenda-form" checked title="Include in discussion agenda"'
+              . ' aria-label="Include \'' . e($item['title']) . '\' in the discussion agenda"> ';
+    }
     $out .= '<span class="pill">' . e(discussion_type_label($item['type'])) . '</span> ';
     $out .= '<a href="' . e($item['url']) . '" class="table-entity-link discussion-item-title">' . e($item['title']) . '</a> ';
     $out .= render_flag_button($item['type'], $item['flaggableId'], $state);
@@ -780,6 +785,47 @@ function generate_agenda_draft(PDO $db): string
     $lines[] = '';
     $lines[] = '';
     $lines[] = '7. NEXT MEETING';
+    $lines[] = '';
+
+    return implode("\n", $lines);
+}
+
+/**
+ * Drafts a plain-text agenda for a standalone team discussion meeting, built
+ * from a chosen subset of currently-open discussion items (their note and
+ * who flagged them) rather than the programme-wide status used by
+ * generate_agenda_draft(). Doesn't touch the items themselves — this is
+ * just a snapshot of the discussion list at the moment it's generated.
+ * @param int[] $includeIds
+ */
+function generate_discussion_agenda_draft(PDO $db, array $includeIds): string
+{
+    $lines = [];
+    $lines[] = 'TEAM DISCUSSION — MEETING AGENDA';
+    $lines[] = 'Week of ' . date('j M Y');
+    $lines[] = '';
+
+    $selected = array_values(array_filter(
+        get_discussion_items($db, 'open'),
+        fn($item) => in_array($item['itemId'], $includeIds, true)
+    ));
+
+    if (!$selected) {
+        $lines[] = 'Nothing selected from the discussion list.';
+        return implode("\n", $lines);
+    }
+
+    $num = 1;
+    foreach ($selected as $item) {
+        $lines[] = $num . '. [' . strtoupper(discussion_type_label($item['type'])) . '] ' . $item['title'];
+        $names = array_map(fn($f) => $f['name'], $item['flaggers']);
+        if ($names) $lines[] = '   Raised by ' . implode(', ', $names);
+        $lines[] = '   ' . ($item['note'] ?: 'No note added yet.');
+        $lines[] = '';
+        $num++;
+    }
+
+    $lines[] = 'ANY OTHER BUSINESS';
     $lines[] = '';
 
     return implode("\n", $lines);
