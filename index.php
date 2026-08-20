@@ -6,7 +6,10 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/permissions.php';
 require_once __DIR__ . '/includes/db.php';
 
-require_login();
+if (!is_logged_in()) {
+    require __DIR__ . '/includes/layout/landing.php';
+    exit;
+}
 
 $pageTitle  = 'Dashboard';
 $activePage = 'dashboard';

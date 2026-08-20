@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="<?= asset_url('/assets/css/style.css') ?>">
 </head>
 <body>
+<?php require __DIR__ . '/includes/layout/notice-banner.php'; ?>
 <div class="login-wrap">
   <div class="login-card">
     <div class="login-logo">
