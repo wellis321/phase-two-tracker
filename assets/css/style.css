@@ -780,6 +780,14 @@ tbody tr:hover td { background: #f8fbf9; }
 .dl-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .dl-value { font-size: .9rem; margin: .1rem 0 .75rem; white-space: pre-wrap; }
 
+/* ─── Tag tree illustration (help page) ───────── */
+.tag-tree-demo { background: var(--bg); border: 1px solid var(--border); padding: .85rem 1.1rem; }
+.tag-tree-demo ul { list-style: none; margin: 0; padding-left: 1.5rem; }
+.tag-tree-demo > ul { padding-left: 0; }
+.tag-tree-demo li { padding: .3rem 0; }
+.tag-tree-demo ul ul { margin-top: .3rem; border-left: 1px dashed var(--border); }
+.tag-tree-demo-field { font-size: .76rem; color: var(--muted); margin-left: .4rem; }
+
 /* ─── Help page sidebar layout ────────────────── */
 .help-layout {
   display: grid;

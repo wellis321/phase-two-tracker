@@ -67,7 +67,7 @@ require __DIR__ . '/includes/layout/header.php';
         </div>
         <div>
           <span class="dl-label">Risk &amp; issue</span>
-          <p class="dl-value">A <strong>risk</strong> is something that could go wrong but hasn't yet — rated red/amber/green by how serious it is. Once it actually happens, log it as (or change its type to) an <strong>issue</strong> instead. Either way it stays open until it's mitigated or closed.</p>
+          <p class="dl-value">A <strong>risk</strong> is something that might go wrong — it may well never happen, but it's worth tracking in case it does. Rate it red/amber/green by how serious it would be if it did. If it actually happens, log it as (or change its type to) an <strong>issue</strong> instead. Either way it stays open until it's mitigated or closed.</p>
         </div>
         <div>
           <span class="dl-label">Decision required</span>
@@ -96,8 +96,8 @@ require __DIR__ . '/includes/layout/header.php';
           <tbody>
             <tr><td>A fixed date or checkpoint the programme needs to hit</td><td><strong>Milestone</strong></td></tr>
             <tr><td>A piece of work someone on the team needs to do</td><td><strong>Task</strong></td></tr>
-            <tr><td>Something that could go wrong, but hasn't yet</td><td><strong>Risk</strong></td></tr>
-            <tr><td>Something that has already gone wrong</td><td><strong>Issue</strong></td></tr>
+            <tr><td>Something that might go wrong (but might not)</td><td><strong>Risk</strong></td></tr>
+            <tr><td>Something that's happening now and needs fixing</td><td><strong>Issue</strong></td></tr>
             <tr><td>A choice that needs to be made by someone, by a date</td><td><strong>Decision</strong></td></tr>
             <tr><td>Work that's on the supplier's plate, not ours</td><td><strong>Supplier activity</strong></td></tr>
             <tr><td>A summary of where things stand right now</td><td><strong>Weekly update</strong></td></tr>
@@ -109,15 +109,31 @@ require __DIR__ . '/includes/layout/header.php';
     <section class="card help-card" id="tags">
       <p class="help-card-label">Concepts</p>
       <h2>Tags — organise things your way</h2>
-      <p class="dl-value" style="margin-bottom:1rem;">
-        Tasks can carry your own labels — there's no fixed list, you build the whole thing. Any tag can have
-        child tags under it, so you might have a top-level <strong>System</strong> tag with
-        <span class="tag-pill">ROCC</span> <span class="tag-pill">NECH</span> <span class="tag-pill">APEX</span>
-        nested underneath, a <strong>Stakeholder</strong> tag with <span class="tag-pill">Tenants</span>
-        <span class="tag-pill">Staff</span> under it, and so on — as many levels deep as you need. Any tag can
-        also carry its own custom fields (a name and a value you make up), for whatever extra detail is worth
-        keeping — an address for a section, a contract reference for a system, anything.
-      </p>
+      <p class="dl-value" style="margin-bottom:1rem;">Tasks can carry your own labels — there's no fixed list, you build the whole thing. Any tag can have child tags nested under it, as many levels deep as you need, and any tag can carry its own custom fields for extra detail worth keeping. For example:</p>
+      <div class="tag-tree-demo">
+        <ul>
+          <li><span class="tag-pill">System</span>
+            <ul>
+              <li><span class="tag-pill">ROCC</span></li>
+              <li><span class="tag-pill">NECH</span></li>
+              <li><span class="tag-pill">APEX</span></li>
+            </ul>
+          </li>
+          <li><span class="tag-pill">Stakeholder</span>
+            <ul>
+              <li><span class="tag-pill">Tenants</span></li>
+              <li><span class="tag-pill">Staff</span></li>
+            </ul>
+          </li>
+          <li><span class="tag-pill">Section</span>
+            <ul>
+              <li><span class="tag-pill">Property Services</span> <span class="tag-tree-demo-field">+ custom field — Address: 2 Spiersbridge Way</span></li>
+              <li><span class="tag-pill">Business Support</span></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <p class="dl-value" style="margin:.75rem 0 1rem;">Here, <strong>System</strong>, <strong>Stakeholder</strong> and <strong>Section</strong> are top-level tags; everything under them is a child tag of that parent. A task tagged <span class="tag-pill">ROCC</span> sits under <strong>System</strong> without being tagged <strong>System</strong> itself — the hierarchy is just for organising the tags, not for inheriting them onto tasks.</p>
       <div class="detail-grid">
         <div>
           <span class="dl-label">Managing tags</span>
