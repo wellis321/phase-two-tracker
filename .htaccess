@@ -1,0 +1,23 @@
+# Phase 2 Delivery Tracker — Apache configuration
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^sql/        - [F,L]
+    RewriteRule ^includes/   - [F,L]
+</IfModule>
+
+<Files ".env">
+    Require all denied
+</Files>
+
+<FilesMatch "\.(sql)$">
+    Require all denied
+</FilesMatch>
+
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+</IfModule>

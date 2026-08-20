@@ -1,0 +1,216 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/permissions.php';
+require_once __DIR__ . '/includes/db.php';
+
+require_login();
+
+$pageTitle  = 'Dashboard';
+$activePage = 'dashboard';
+
+$db = db();
+
+$latestSnapshot = $db->query(
+    'SELECT s.*, u.display_name, u.username
+     FROM pm_weekly_snapshots s
+     LEFT JOIN users u ON u.id = s.created_by_user_id
+     ORDER BY s.created_at DESC LIMIT 1'
+)->fetch();
+
+$openTasks    = (int)$db->query("SELECT COUNT(*) FROM pm_tasks WHERE status != 'done'")->fetchColumn();
+$openRisks    = (int)$db->query("SELECT COUNT(*) FROM pm_risks_issues WHERE status != 'closed'")->fetchColumn();
+$openDecisions = (int)$db->query("SELECT COUNT(*) FROM pm_decisions WHERE status = 'open'")->fetchColumn();
+$activeSupplier = (int)$db->query("SELECT COUNT(*) FROM pm_supplier_activities WHERE status IN ('planned','in_progress')")->fetchColumn();
+$upcomingMilestones90 = (int)$db->query(
+    "SELECT COUNT(*) FROM pm_milestones WHERE status != 'complete' AND target_date IS NOT NULL AND target_date <= DATE_ADD(CURDATE(), INTERVAL 90 DAY)"
+)->fetchColumn();
+
+$myTasks = [];
+if (get_current_user_id() > 0) {
+    $stmt = $db->prepare(
+        "SELECT * FROM pm_tasks WHERE assignee_user_id = ? AND status != 'done' ORDER BY due_date IS NULL, due_date LIMIT 6"
+    );
+    $stmt->execute([get_current_user_id()]);
+    $myTasks = $stmt->fetchAll();
+}
+
+$upcomingMilestones = $db->query(
+    "SELECT * FROM pm_milestones WHERE status != 'complete' AND target_date IS NOT NULL
+     AND target_date <= DATE_ADD(CURDATE(), INTERVAL 90 DAY)
+     ORDER BY target_date LIMIT 8"
+)->fetchAll();
+
+$topRisks = $db->query(
+    "SELECT * FROM pm_risks_issues WHERE status != 'closed' ORDER BY FIELD(severity,'red','amber','green'), raised_date DESC LIMIT 6"
+)->fetchAll();
+
+$openDecisionsList = $db->query(
+    "SELECT * FROM pm_decisions WHERE status = 'open' ORDER BY needed_by_date IS NULL, needed_by_date LIMIT 6"
+)->fetchAll();
+
+$supplierActivity = $db->query(
+    "SELECT * FROM pm_supplier_activities WHERE status IN ('planned','in_progress') ORDER BY due_date IS NULL, due_date LIMIT 6"
+)->fetchAll();
+
+require __DIR__ . '/includes/layout/header.php';
+?>
+
+<?php if (is_admin()): ?>
+<div class="page-header-actions" style="margin-bottom:1rem; justify-content:flex-end; display:flex; gap:.6rem;">
+  <a href="<?= APP_URL ?>/updates/create.php" class="btn btn--primary">+ Publish weekly update</a>
+</div>
+<?php endif; ?>
+
+<div class="card" style="margin-bottom:1rem;">
+  <?php if ($latestSnapshot): ?>
+  <div class="status-hero">
+    <?= rag_badge($latestSnapshot['overall_status']) ?>
+    <div class="status-hero-text">
+      <h2><?= e($latestSnapshot['period_label']) ?></h2>
+      <div class="status-hero-meta">
+        Published <?= e(date('j M Y, g:ia', strtotime($latestSnapshot['created_at']))) ?>
+        by <?= e($latestSnapshot['display_name'] ?: $latestSnapshot['username'] ?: 'unknown') ?>
+        · <a href="<?= APP_URL ?>/updates/index.php">View archive</a>
+      </div>
+      <?php if ($latestSnapshot['current_focus']): ?>
+      <div class="status-block">
+        <h3>Current focus — next couple of weeks</h3>
+        <p><?= e($latestSnapshot['current_focus']) ?></p>
+      </div>
+      <?php endif; ?>
+      <?php if ($latestSnapshot['progress_narrative']): ?>
+      <div class="status-block">
+        <h3>Progress this week</h3>
+        <p><?= e($latestSnapshot['progress_narrative']) ?></p>
+      </div>
+      <?php endif; ?>
+      <?php if ($latestSnapshot['looking_ahead_notes']): ?>
+      <div class="status-block">
+        <h3>Looking ahead — next 60–90 days</h3>
+        <p><?= e($latestSnapshot['looking_ahead_notes']) ?></p>
+      </div>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php else: ?>
+  <p class="empty-note">No weekly update has been published yet.
+    <?= is_admin() ? '<a href="' . APP_URL . '/updates/create.php">Publish the first one</a>.' : '' ?>
+  </p>
+  <?php endif; ?>
+</div>
+
+<div class="stats-grid">
+  <a href="<?= APP_URL ?>/tasks/index.php" class="stat-card">
+    <span class="stat-label">Open tasks</span>
+    <span class="stat-value"><?= $openTasks ?></span>
+  </a>
+  <a href="<?= APP_URL ?>/risks/index.php" class="stat-card">
+    <span class="stat-label">Risks &amp; issues</span>
+    <span class="stat-value"><?= $openRisks ?></span>
+  </a>
+  <a href="<?= APP_URL ?>/decisions/index.php" class="stat-card">
+    <span class="stat-label">Decisions required</span>
+    <span class="stat-value"><?= $openDecisions ?></span>
+  </a>
+  <a href="<?= APP_URL ?>/supplier/index.php" class="stat-card">
+    <span class="stat-label">Active supplier items</span>
+    <span class="stat-value"><?= $activeSupplier ?></span>
+  </a>
+  <a href="<?= APP_URL ?>/milestones/index.php" class="stat-card">
+    <span class="stat-label">Milestones in 90 days</span>
+    <span class="stat-value"><?= $upcomingMilestones90 ?></span>
+  </a>
+</div>
+
+<div class="dash-grid">
+  <div>
+    <div class="card">
+      <div class="card-title-row">
+        <h2>Risks &amp; issues</h2>
+        <a href="<?= APP_URL ?>/risks/index.php" class="btn btn--outline btn--sm">View all</a>
+      </div>
+      <?php if ($topRisks): ?>
+      <ul class="list-simple">
+        <?php foreach ($topRisks as $r): ?>
+        <li>
+          <span class="li-title"><?= rag_badge($r['severity']) ?> <?= e($r['title']) ?></span>
+          <span class="li-meta"><?= e(ucfirst($r['type'])) ?> · <span class="pill pill--<?= e($r['status']) ?>"><?= e(str_replace('_',' ',$r['status'])) ?></span></span>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+      <?php else: ?><p class="empty-note">No open risks or issues.</p><?php endif; ?>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row">
+        <h2>Decisions required</h2>
+        <a href="<?= APP_URL ?>/decisions/index.php" class="btn btn--outline btn--sm">View all</a>
+      </div>
+      <?php if ($openDecisionsList): ?>
+      <ul class="list-simple">
+        <?php foreach ($openDecisionsList as $d): ?>
+        <li>
+          <span class="li-title"><?= e($d['title']) ?></span>
+          <span class="li-meta">Needed by <?= format_date($d['needed_by_date']) ?></span>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+      <?php else: ?><p class="empty-note">No decisions currently open.</p><?php endif; ?>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row">
+        <h2>Supplier activity</h2>
+        <a href="<?= APP_URL ?>/supplier/index.php" class="btn btn--outline btn--sm">View all</a>
+      </div>
+      <?php if ($supplierActivity): ?>
+      <ul class="list-simple">
+        <?php foreach ($supplierActivity as $s): ?>
+        <li>
+          <span class="li-title"><?= e($s['supplier']) ?>: <?= e($s['title']) ?></span>
+          <span class="li-meta"><span class="pill pill--<?= e($s['status']) ?>"><?= e(str_replace('_',' ',$s['status'])) ?></span> · <?= format_date($s['due_date']) ?></span>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+      <?php else: ?><p class="empty-note">No planned or in-progress supplier activity.</p><?php endif; ?>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-title-row">
+        <h2>Upcoming milestones</h2>
+        <a href="<?= APP_URL ?>/milestones/index.php" class="btn btn--outline btn--sm">View all</a>
+      </div>
+      <?php if ($upcomingMilestones): ?>
+      <ul class="list-simple">
+        <?php foreach ($upcomingMilestones as $m): ?>
+        <li>
+          <span class="li-title"><?= e($m['title']) ?></span>
+          <span class="li-meta"><span class="pill pill--<?= e($m['status']) ?>"><?= e(str_replace('_',' ',$m['status'])) ?></span> · <?= format_date($m['target_date']) ?></span>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+      <?php else: ?><p class="empty-note">Nothing due in the next 90 days.</p><?php endif; ?>
+    </div>
+
+    <?php if ($myTasks): ?>
+    <div class="card">
+      <h2>My open tasks</h2>
+      <ul class="list-simple">
+        <?php foreach ($myTasks as $t): ?>
+        <li>
+          <span class="li-title"><?= e($t['title']) ?></span>
+          <span class="li-meta"><span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_',' ',$t['status'])) ?></span> · <?= format_date($t['due_date']) ?></span>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+    <?php endif; ?>
+  </div>
+</div>
+
+<?php require __DIR__ . '/includes/layout/footer.php'; ?>
