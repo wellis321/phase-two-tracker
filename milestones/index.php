@@ -52,7 +52,7 @@ require __DIR__ . '/../includes/layout/header.php';
         <td><?= format_date($m['target_date']) ?></td>
         <td><span class="pill pill--<?= e($m['status']) ?>"><?= e(str_replace('_', ' ', $m['status'])) ?></span></td>
         <?php if (is_admin()): ?>
-        <td class="col-actions"><a href="<?= APP_URL ?>/milestones/edit.php?id=<?= (int)$m['id'] ?>">Edit</a></td>
+        <td class="col-actions"><a href="<?= APP_URL ?>/milestones/edit.php?id=<?= (int)$m['id'] ?>" class="icon-btn" title="Edit" aria-label="Edit"><?= icon_edit() ?></a></td>
         <?php endif; ?>
       </tr>
       <?php endforeach; ?>

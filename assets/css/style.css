@@ -184,10 +184,49 @@ body {
 .status-hero .rag { font-size: .95rem; padding: .35rem .8rem; }
 .status-hero-text { flex: 1 1 260px; }
 .status-hero-text h2 { margin: 0 0 .35rem; font-size: 1.05rem; }
-.status-hero-meta { font-size: .8rem; color: var(--muted); margin-bottom: .5rem; }
-.status-block { margin-top: .85rem; }
-.status-block h3 { margin: 0 0 .3rem; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.status-block p { margin: 0; white-space: pre-wrap; }
+.status-hero-meta { font-size: .8rem; color: var(--muted); margin: 0; }
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .85rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.status-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  padding: .9rem 1rem;
+}
+.status-block h3 {
+  margin: 0 0 .55rem;
+  font-size: .74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--green-dark);
+  line-height: 1.4;
+}
+.status-block-sub {
+  display: block;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  font-size: .72rem;
+  margin-top: .1rem;
+}
+.status-block p {
+  margin: 0;
+  font-size: .88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* Weekly-archive detail view reuses .status-block stacked, not gridded */
+.card > .status-block + .status-block { margin-top: .85rem; }
 
 .stats-grid {
   display: grid;
@@ -313,6 +352,22 @@ tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: #f8fbf9; }
 .col-actions { white-space: nowrap; text-align: right; }
 .col-actions a + a { margin-left: .35rem; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--green-dark);
+  text-decoration: none;
+  vertical-align: middle;
+  transition: background .15s, border-color .15s;
+}
+.icon-btn:hover { background: var(--green-light); border-color: var(--green); }
+.icon-btn svg { width: 14px; height: 14px; }
 
 /* ─── Badges / pills ──────────────────────────── */
 .rag {

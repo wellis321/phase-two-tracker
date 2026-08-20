@@ -78,26 +78,30 @@ require __DIR__ . '/includes/layout/header.php';
         by <?= e($latestSnapshot['display_name'] ?: $latestSnapshot['username'] ?: 'unknown') ?>
         · <a href="<?= APP_URL ?>/updates/index.php">View archive</a>
       </div>
-      <?php if ($latestSnapshot['current_focus']): ?>
-      <div class="status-block">
-        <h3>Current focus — next couple of weeks</h3>
-        <p><?= e($latestSnapshot['current_focus']) ?></p>
-      </div>
-      <?php endif; ?>
-      <?php if ($latestSnapshot['progress_narrative']): ?>
-      <div class="status-block">
-        <h3>Progress this week</h3>
-        <p><?= e($latestSnapshot['progress_narrative']) ?></p>
-      </div>
-      <?php endif; ?>
-      <?php if ($latestSnapshot['looking_ahead_notes']): ?>
-      <div class="status-block">
-        <h3>Looking ahead — next 60–90 days</h3>
-        <p><?= e($latestSnapshot['looking_ahead_notes']) ?></p>
-      </div>
-      <?php endif; ?>
     </div>
   </div>
+  <?php if ($latestSnapshot['current_focus'] || $latestSnapshot['progress_narrative'] || $latestSnapshot['looking_ahead_notes']): ?>
+  <div class="status-grid">
+    <?php if ($latestSnapshot['current_focus']): ?>
+    <div class="status-block">
+      <h3>Current focus <span class="status-block-sub">next couple of weeks</span></h3>
+      <p><?= e($latestSnapshot['current_focus']) ?></p>
+    </div>
+    <?php endif; ?>
+    <?php if ($latestSnapshot['progress_narrative']): ?>
+    <div class="status-block">
+      <h3>Progress <span class="status-block-sub">this week</span></h3>
+      <p><?= e($latestSnapshot['progress_narrative']) ?></p>
+    </div>
+    <?php endif; ?>
+    <?php if ($latestSnapshot['looking_ahead_notes']): ?>
+    <div class="status-block">
+      <h3>Looking ahead <span class="status-block-sub">next 60–90 days</span></h3>
+      <p><?= e($latestSnapshot['looking_ahead_notes']) ?></p>
+    </div>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
   <?php else: ?>
   <p class="empty-note">No weekly update has been published yet.
     <?= is_admin() ? '<a href="' . APP_URL . '/updates/create.php">Publish the first one</a>.' : '' ?>

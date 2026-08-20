@@ -81,7 +81,7 @@ require __DIR__ . '/../includes/layout/header.php';
         <td><span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_', ' ', $t['status'])) ?></span></td>
         <td><?= format_date($t['due_date']) ?></td>
         <?php if (is_admin()): ?>
-        <td class="col-actions"><a href="<?= APP_URL ?>/tasks/edit.php?id=<?= (int)$t['id'] ?>">Edit</a></td>
+        <td class="col-actions"><a href="<?= APP_URL ?>/tasks/edit.php?id=<?= (int)$t['id'] ?>" class="icon-btn" title="Edit" aria-label="Edit"><?= icon_edit() ?></a></td>
         <?php endif; ?>
       </tr>
       <?php endforeach; ?>

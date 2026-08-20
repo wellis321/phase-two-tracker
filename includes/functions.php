@@ -75,6 +75,11 @@ function rag_badge(?string $level): string
     return '<span class="rag rag-' . e($level) . '">' . $label . '</span>';
 }
 
+function icon_edit(): string
+{
+    return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 3.6a1.7 1.7 0 0 1 2.4 2.4L7 14.8l-3.2.8.8-3.2 8.8-8.8z"/></svg>';
+}
+
 function format_date(?string $date): string
 {
     if (!$date) return '—';
