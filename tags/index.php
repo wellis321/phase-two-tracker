@@ -49,14 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', 'Tag (and any children) deleted.');
         redirect(APP_URL . '/tags/index.php');
     } elseif (isset($_POST['add_field'])) {
-        $tagId = (int)($_POST['tag_id'] ?? 0);
-        $name  = trim($_POST['field_name'] ?? '');
-        $value = trim($_POST['field_value'] ?? '');
+        $tagId         = (int)($_POST['tag_id'] ?? 0);
+        $parentFieldId = (int)($_POST['parent_field_id'] ?? 0) ?: null;
+        $name          = trim($_POST['field_name'] ?? '');
+        $value         = trim($_POST['field_value'] ?? '');
         if ($name === '' || $tagId <= 0) {
             $errors[] = 'Field name is required.';
         } else {
-            $db->prepare('INSERT INTO pm_tag_fields (tag_id, field_name, field_value) VALUES (?, ?, ?)')
-               ->execute([$tagId, $name, $value ?: null]);
+            $db->prepare('INSERT INTO pm_tag_fields (tag_id, parent_field_id, field_name, field_value) VALUES (?, ?, ?, ?)')
+               ->execute([$tagId, $parentFieldId, $name, $value ?: null]);
             flash('success', "Field '{$name}' added.");
             redirect(APP_URL . '/tags/index.php');
         }
@@ -123,27 +124,7 @@ function render_tag_node(array $node, int $depth): void
 
       <?php if ($node['fields']): ?>
       <div class="tag-fields">
-        <?php foreach ($node['fields'] as $f): ?>
-        <span class="editable-wrap">
-          <span class="pill editable-view field-pill-view">
-            <?= e($f['name']) ?>: <?= e($f['value'] ?? '') ?>
-            <button type="button" data-edit-toggle title="Edit field" aria-label="Edit field <?= e($f['name']) ?>">&#9998;</button>
-            <form method="POST" action="" onsubmit="return confirm('Delete the &quot;<?= e($f['name']) ?>&quot; field?');" style="display:inline;">
-              <?= csrf_field() ?>
-              <input type="hidden" name="delete_field" value="<?= $f['id'] ?>">
-              <button type="submit" aria-label="Delete field <?= e($f['name']) ?>">&times;</button>
-            </form>
-          </span>
-          <form method="POST" action="" class="editable-form field-pill-edit-form" hidden>
-            <?= csrf_field() ?>
-            <input type="hidden" name="rename_field" value="<?= $f['id'] ?>">
-            <input type="text" name="field_name" value="<?= e($f['name']) ?>" placeholder="Field" required>
-            <input type="text" name="field_value" value="<?= e($f['value'] ?? '') ?>" placeholder="Value">
-            <button type="submit" aria-label="Save">&#10003;</button>
-            <button type="button" data-edit-cancel aria-label="Cancel">&times;</button>
-          </form>
-        </span>
-        <?php endforeach; ?>
+        <?php foreach ($node['fields'] as $f): render_field_node($f, $id, 0); endforeach; ?>
       </div>
       <?php endif; ?>
 
@@ -168,12 +149,57 @@ function render_tag_node(array $node, int $depth): void
     </div>
     <?php
 }
+
+/**
+ * Recursively renders one field (and its sub-fields) belonging to $tagId.
+ */
+function render_field_node(array $field, int $tagId, int $depth): void
+{
+    $id     = $field['id'];
+    $indent = $depth * 1.25;
+    ?>
+    <div class="field-node" style="margin-left:<?= $indent ?>rem;">
+      <div class="editable-wrap field-node-row">
+        <span class="editable-view field-node-view">
+          <span class="field-node-label"><span class="field-node-name"><?= e($field['name']) ?></span><?php if ($field['value'] !== null && $field['value'] !== ''): ?><span class="field-node-value">: <?= e($field['value']) ?></span><?php endif; ?></span>
+          <button type="button" class="icon-btn" data-edit-toggle title="Edit field" aria-label="Edit field <?= e($field['name']) ?>"><?= icon_edit() ?></button>
+          <button type="button" class="btn btn--outline btn--sm" data-show-target="field-child-form-<?= $id ?>">+ Sub-field</button>
+          <form method="POST" action="" onsubmit="return confirm('Delete &quot;<?= e($field['name']) ?>&quot; and any sub-fields?');" style="display:inline;">
+            <?= csrf_field() ?>
+            <input type="hidden" name="delete_field" value="<?= $id ?>">
+            <button type="submit" class="btn btn--outline btn--sm">Delete</button>
+          </form>
+        </span>
+        <form method="POST" action="" class="editable-form tag-inline-form" hidden>
+          <?= csrf_field() ?>
+          <input type="hidden" name="rename_field" value="<?= $id ?>">
+          <input type="text" name="field_name" value="<?= e($field['name']) ?>" placeholder="Field" required>
+          <input type="text" name="field_value" value="<?= e($field['value'] ?? '') ?>" placeholder="Value">
+          <button type="submit" class="btn btn--primary btn--sm">Save</button>
+          <button type="button" class="btn btn--outline btn--sm" data-edit-cancel>Cancel</button>
+        </form>
+      </div>
+
+      <form method="POST" action="" id="field-child-form-<?= $id ?>" class="editable-form tag-inline-form" hidden>
+        <?= csrf_field() ?>
+        <input type="hidden" name="tag_id" value="<?= $tagId ?>">
+        <input type="hidden" name="parent_field_id" value="<?= $id ?>">
+        <input type="text" name="field_name" placeholder="Sub-field name, e.g. Postcode" required>
+        <input type="text" name="field_value" placeholder="Value">
+        <button type="submit" name="add_field" value="1" class="btn btn--primary btn--sm">Add sub-field</button>
+        <button type="button" class="btn btn--outline btn--sm" data-hide-self>Cancel</button>
+      </form>
+
+      <?php foreach ($field['children'] as $child): render_field_node($child, $tagId, $depth + 1); endforeach; ?>
+    </div>
+    <?php
+}
 ?>
 
 <div class="page-header">
   <div>
     <h1>Tags</h1>
-    <p>Organise tasks (and, over time, other items) however makes sense to you. Any tag can have child tags, and any tag can carry its own custom fields.</p>
+    <p>Organise tasks (and, over time, other items) however makes sense to you. Any tag can have child tags, and any tag can carry its own custom fields — which can themselves have sub-fields (e.g. an Address field broken into Street, City, Postcode).</p>
   </div>
 </div>
 

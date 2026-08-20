@@ -105,19 +105,36 @@ function format_date(?string $date): string
 }
 
 /**
- * Nested tree of every tag: id, name, fields (free-form key/value pairs),
- * and children (same shape). Top-level tags have no parent.
+ * Nested tree of every tag: id, name, fields (each a nested tree of its
+ * own — a field can have child fields, e.g. Address -> Street/City/
+ * Postcode), and children (same shape as the tag itself). Top-level tags
+ * have no parent.
  * @return array<int, array{id:int, name:string, fields: array, children: array}>
  */
 function get_tag_tree(PDO $db): array
 {
     $rows = $db->query('SELECT id, parent_id, name FROM pm_tags ORDER BY name')->fetchAll();
-    $fieldRows = $db->query('SELECT id, tag_id, field_name, field_value FROM pm_tag_fields ORDER BY id')->fetchAll();
+    $fieldRows = $db->query('SELECT id, tag_id, parent_field_id, field_name, field_value FROM pm_tag_fields ORDER BY id')->fetchAll();
 
-    $fieldsByTag = [];
+    $fieldChildrenOf = [];
     foreach ($fieldRows as $f) {
-        $fieldsByTag[(int)$f['tag_id']][] = ['id' => (int)$f['id'], 'name' => $f['field_name'], 'value' => $f['field_value']];
+        $tagId     = (int)$f['tag_id'];
+        $parentKey = $f['parent_field_id'] !== null ? (int)$f['parent_field_id'] : 0;
+        $fieldChildrenOf[$tagId][$parentKey][] = $f;
     }
+    $buildFields = function (int $tagId, int $parentKey) use (&$buildFields, $fieldChildrenOf): array {
+        $out = [];
+        foreach ($fieldChildrenOf[$tagId][$parentKey] ?? [] as $f) {
+            $id = (int)$f['id'];
+            $out[] = [
+                'id'       => $id,
+                'name'     => $f['field_name'],
+                'value'    => $f['field_value'],
+                'children' => $buildFields($tagId, $id),
+            ];
+        }
+        return $out;
+    };
 
     $childrenOf = [];
     foreach ($rows as $r) {
@@ -125,14 +142,14 @@ function get_tag_tree(PDO $db): array
         $childrenOf[$key][] = $r;
     }
 
-    $build = function (int $parentKey) use (&$build, $childrenOf, $fieldsByTag): array {
+    $build = function (int $parentKey) use (&$build, $childrenOf, $buildFields): array {
         $out = [];
         foreach ($childrenOf[$parentKey] ?? [] as $r) {
             $id = (int)$r['id'];
             $out[] = [
                 'id'       => $id,
                 'name'     => $r['name'],
-                'fields'   => $fieldsByTag[$id] ?? [],
+                'fields'   => $buildFields($id, 0),
                 'children' => $build($id),
             ];
         }

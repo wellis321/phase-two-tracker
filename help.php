@@ -127,17 +127,25 @@ require __DIR__ . '/includes/layout/header.php';
           </li>
           <li><span class="tag-pill">Section</span>
             <ul>
-              <li><span class="tag-pill">Property Services</span> <span class="tag-tree-demo-field">+ custom field — Address: 2 Spiersbridge Way</span></li>
+              <li><span class="tag-pill">Property Services</span>
+                <div class="tag-tree-demo-field">custom field: Address
+                  <ul>
+                    <li>Street: 2 Spiersbridge Way</li>
+                    <li>City: Glasgow</li>
+                    <li>Postcode: G46 8NG</li>
+                  </ul>
+                </div>
+              </li>
               <li><span class="tag-pill">Business Support</span></li>
             </ul>
           </li>
         </ul>
       </div>
-      <p class="dl-value" style="margin:.75rem 0 1rem;">Here, <strong>System</strong>, <strong>Stakeholder</strong> and <strong>Section</strong> are top-level tags; everything under them is a child tag of that parent. A task tagged <span class="tag-pill">ROCC</span> sits under <strong>System</strong> without being tagged <strong>System</strong> itself — the hierarchy is just for organising the tags, not for inheriting them onto tasks.</p>
+      <p class="dl-value" style="margin:.75rem 0 1rem;">Here, <strong>System</strong>, <strong>Stakeholder</strong> and <strong>Section</strong> are top-level tags; everything under them is a child tag of that parent. A task tagged <span class="tag-pill">ROCC</span> sits under <strong>System</strong> without being tagged <strong>System</strong> itself — the hierarchy is just for organising the tags, not for inheriting them onto tasks. Fields work the same way: <strong>Address</strong> above has no value of its own, just three sub-fields underneath it, each independently editable and (unlike one big text blob) each queryable on its own later.</p>
       <div class="detail-grid">
         <div>
           <span class="dl-label">Managing tags</span>
-          <p class="dl-value">Admins go to <a href="<?= APP_URL ?>/tags/index.php">Tags</a> (linked from the Tasks page) to add tags, nest them under a parent, add custom fields to any tag, rename anything with the pencil icon, or delete it (deleting a tag also removes its children and fields).</p>
+          <p class="dl-value">Admins go to <a href="<?= APP_URL ?>/tags/index.php">Tags</a> (linked from the Tasks page) to add tags, nest them under a parent, add custom fields to any tag (and nest those too, as above), rename anything with the pencil icon, or delete it (deleting a tag or field also removes anything nested under it).</p>
         </div>
         <div>
           <span class="dl-label">Applying tags</span>

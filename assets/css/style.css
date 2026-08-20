@@ -735,40 +735,13 @@ tbody tr:hover td { background: #f8fbf9; }
 }
 .tag-inline-form input[type="text"]:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(0,106,81,.12); }
 
-.tag-fields { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .45rem; }
-.field-pill-view button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: .25rem;
-  cursor: pointer;
-  color: var(--muted);
-  font-size: .85rem;
-  line-height: 1;
-}
-.field-pill-view button:hover { color: var(--red); }
-.field-pill-view [data-edit-toggle]:hover { color: var(--green-dark); }
-.field-pill-view form { display: inline; margin: 0; }
-
-.field-pill-edit-form {
-  display: inline-flex;
-  align-items: center;
-  gap: .3rem;
-  padding: .1rem .3rem .1rem .5rem;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  font-size: .72rem;
-}
-.field-pill-edit-form input[type="text"] {
-  font-family: var(--font);
-  font-size: .72rem;
-  padding: .05rem .3rem;
-  border: 1px solid var(--border);
-  width: 90px;
-}
-.field-pill-edit-form button { background: none; border: none; padding: 0 .1rem; cursor: pointer; font-size: .85rem; line-height: 1; color: var(--green-dark); }
-.field-pill-edit-form button[aria-label="Save"]:hover { color: var(--green); }
-.field-pill-edit-form button[aria-label="Cancel"]:hover { color: var(--red); }
+.tag-fields { margin-top: .45rem; padding: .5rem .75rem; background: var(--bg); border: 1px solid var(--border); }
+.field-node { padding: .3rem 0; }
+.field-node-row { display: flex; align-items: center; }
+.field-node-view { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-size: .82rem; }
+.field-node-name { font-weight: 600; }
+.field-node-value { color: var(--muted); }
+.field-node-view form { display: inline; margin: 0; }
 
 .tag-picker { display: flex; flex-direction: column; gap: .3rem; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); padding: .6rem .75rem; background: var(--bg); }
 .tag-picker-option { display: flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 400; cursor: pointer; white-space: nowrap; }
@@ -786,7 +759,8 @@ tbody tr:hover td { background: #f8fbf9; }
 .tag-tree-demo > ul { padding-left: 0; }
 .tag-tree-demo li { padding: .3rem 0; }
 .tag-tree-demo ul ul { margin-top: .3rem; border-left: 1px dashed var(--border); }
-.tag-tree-demo-field { font-size: .76rem; color: var(--muted); margin-left: .4rem; }
+.tag-tree-demo-field { font-size: .76rem; color: var(--muted); margin-top: .3rem; }
+.tag-tree-demo-field li { padding: .15rem 0; }
 
 /* ─── Help page sidebar layout ────────────────── */
 .help-layout {

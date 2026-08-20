@@ -125,14 +125,20 @@ CREATE TABLE IF NOT EXISTS pm_tags (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Free-form custom fields on a tag (e.g. "Address" -> "2 Spiersbridge Way").
+-- Fields can themselves nest under a parent field (parent_field_id), so a
+-- composite value like Address can be broken into Street/City/Postcode as
+-- their own queryable rows instead of one flattened blob.
 CREATE TABLE IF NOT EXISTS pm_tag_fields (
-  id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
-  tag_id        INT UNSIGNED  NOT NULL,
-  field_name    VARCHAR(100)  NOT NULL,
-  field_value   TEXT,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  tag_id            INT UNSIGNED  NOT NULL,
+  parent_field_id   INT UNSIGNED  NULL,
+  field_name        VARCHAR(100)  NOT NULL,
+  field_value       TEXT,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_tag (tag_id),
-  CONSTRAINT fk_pm_tag_fields_tag FOREIGN KEY (tag_id) REFERENCES pm_tags(id) ON DELETE CASCADE
+  KEY idx_parent_field (parent_field_id),
+  CONSTRAINT fk_pm_tag_fields_tag FOREIGN KEY (tag_id) REFERENCES pm_tags(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pm_tag_fields_parent FOREIGN KEY (parent_field_id) REFERENCES pm_tag_fields(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS pm_taggables (
