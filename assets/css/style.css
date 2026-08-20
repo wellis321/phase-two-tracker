@@ -502,3 +502,74 @@ tbody tr:hover td { background: #f8fbf9; }
 @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr; } }
 .dl-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .dl-value { font-size: .9rem; margin: .1rem 0 .75rem; white-space: pre-wrap; }
+
+/* ─── Help page sidebar layout ────────────────── */
+.help-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+@media (max-width: 820px) { .help-layout { grid-template-columns: 1fr; } }
+
+.help-nav {
+  position: sticky;
+  top: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: .65rem 0;
+}
+@media (min-width: 821px) {
+  .help-nav { max-height: calc(100vh - 2rem); overflow-y: auto; overscroll-behavior: contain; scroll-behavior: smooth; }
+}
+@media (max-width: 820px) {
+  .help-nav { position: static; display: flex; flex-wrap: wrap; gap: .25rem; padding: .65rem; }
+  .help-nav-section { display: none; }
+}
+.help-nav-section {
+  margin: 0;
+  padding: .45rem .85rem .32rem;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: var(--green-dark);
+  background: var(--green-light);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+  user-select: none;
+}
+.help-nav .help-nav-section:first-child { border-top: none; }
+.help-nav a {
+  display: block;
+  padding: .32rem .85rem;
+  font-size: .82rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.help-nav a:hover { color: var(--text); background: var(--bg); }
+.help-nav a.help-nav--active {
+  color: var(--green-dark);
+  border-left-color: var(--green);
+  font-weight: 600;
+  background: var(--green-light);
+}
+@media (max-width: 820px) {
+  .help-nav a { border-left: none; padding: .35rem .75rem; background: var(--bg); }
+  .help-nav a.help-nav--active { background: var(--green-light); border: 1px solid var(--green); }
+}
+
+.help-main { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.help-card { scroll-margin-top: 4.5rem; }
+.help-card-label {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin: 0 0 .35rem;
+}
