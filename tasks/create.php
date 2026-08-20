@@ -11,6 +11,7 @@ $db = db();
 
 $f = ['title' => '', 'description' => '', 'assignee_user_id' => '', 'status' => 'todo', 'due_date' => ''];
 $errors = [];
+$selectedTagIds = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
@@ -22,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $f['assignee_user_id'] = $_POST['assignee_user_id'] ?? '';
     $f['status']           = $_POST['status'] ?? 'todo';
     $f['due_date']         = $_POST['due_date'] ?? '';
+    $selectedTagIds        = array_map('intval', $_POST['tag_ids'] ?? []);
 
     if ($f['title'] === '') $errors[] = 'Title is required.';
     if (!in_array($f['status'], ['todo', 'in_progress', 'done'], true)) $errors[] = 'Invalid status.';
@@ -38,13 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $f['due_date'] ?: null,
             get_current_user_id(),
         ]);
+        save_tags_for($db, 'task', (int)$db->lastInsertId(), $selectedTagIds);
         flash('success', "Task '{$f['title']}' created.");
         redirect(APP_URL . '/tasks/index.php');
     }
 }
 
 render:
-$users = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
+$users      = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
+$categories = get_tag_categories($db);
 
 $pageTitle  = 'Add Task';
 $activePage = 'tasks';
@@ -89,6 +93,10 @@ require __DIR__ . '/../includes/layout/header.php';
       <div class="field">
         <label for="due_date">Due date</label>
         <input type="date" id="due_date" name="due_date" value="<?= e($f['due_date']) ?>">
+      </div>
+      <div class="field form-full">
+        <label>Tags</label>
+        <?= render_tag_checkboxes($categories, $selectedTagIds) ?>
       </div>
     </div>
     <div class="form-actions">

@@ -107,3 +107,33 @@ CREATE TABLE IF NOT EXISTS pm_weekly_snapshots (
   KEY idx_created_at (created_at),
   CONSTRAINT fk_pm_snapshots_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- User-defined categorisation (e.g. category "System" holding tags "ROCC",
+-- "NECH", "APEX"; category "Stakeholder" holding "Tenants", "Staff"). Admins
+-- manage categories/tags on the Tags page; taggable_type/taggable_id is a
+-- generic pointer so tags can attach to any pm_* record, not just tasks.
+CREATE TABLE IF NOT EXISTS pm_tag_categories (
+  id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(100)  NOT NULL,
+  sort_order    INT UNSIGNED  NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_category_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pm_tags (
+  id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  category_id   INT UNSIGNED  NOT NULL,
+  name          VARCHAR(100)  NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_tag_in_category (category_id, name),
+  CONSTRAINT fk_pm_tags_category FOREIGN KEY (category_id) REFERENCES pm_tag_categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pm_taggables (
+  tag_id          INT UNSIGNED NOT NULL,
+  taggable_type   VARCHAR(20)  NOT NULL,
+  taggable_id     INT UNSIGNED NOT NULL,
+  PRIMARY KEY (tag_id, taggable_type, taggable_id),
+  KEY idx_taggable (taggable_type, taggable_id),
+  CONSTRAINT fk_pm_taggables_tag FOREIGN KEY (tag_id) REFERENCES pm_tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

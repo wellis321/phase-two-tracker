@@ -27,9 +27,13 @@ require __DIR__ . '/includes/layout/header.php';
     <p class="help-nav-section">Concepts</p>
     <a href="#building-blocks">The building blocks</a>
     <a href="#tell-apart">How to tell them apart</a>
+    <a href="#tags">Tags — organise things your way</a>
     <p class="help-nav-section">Reference</p>
     <a href="#statuses">What the statuses mean</a>
     <a href="#roles">Who can do what</a>
+    <p class="help-nav-section">Features</p>
+    <a href="#big-picture">Seeing the big picture</a>
+    <a href="#quick-add">Adding things quickly</a>
     <p class="help-nav-section">Workflow</p>
     <a href="#typical-week">A typical week</a>
   </nav>
@@ -102,6 +106,33 @@ require __DIR__ . '/includes/layout/header.php';
       </div>
     </section>
 
+    <section class="card help-card" id="tags">
+      <p class="help-card-label">Concepts</p>
+      <h2>Tags — organise things your way</h2>
+      <p class="dl-value" style="margin-bottom:1rem;">
+        Tasks can carry your own labels, grouped into categories you define — for example a
+        <strong>System</strong> category holding <span class="tag-pill">ROCC</span> <span class="tag-pill">NECH</span>
+        <span class="tag-pill">APEX</span>, a <strong>Stakeholder</strong> category holding
+        <span class="tag-pill">Tenants</span> <span class="tag-pill">Staff</span>, or a <strong>Section</strong> category for
+        <span class="tag-pill">Property Services</span> <span class="tag-pill">Business Support</span>. There's nothing
+        fixed about these — add whatever categories and tags actually make sense for how your team talks about the work.
+      </p>
+      <div class="detail-grid">
+        <div>
+          <span class="dl-label">Managing tags</span>
+          <p class="dl-value">Admins go to <a href="<?= APP_URL ?>/tags/index.php">Tags</a> (linked from the Tasks page) to add categories, add tags within them, rename either with the pencil icon, or delete them.</p>
+        </div>
+        <div>
+          <span class="dl-label">Applying tags</span>
+          <p class="dl-value">Pick any number of tags, grouped by category, when adding or editing a task — or via the quick-add button. They show as small pills under the task title.</p>
+        </div>
+        <div>
+          <span class="dl-label">Filtering by tag</span>
+          <p class="dl-value">The Tag dropdown on the Tasks page shows only tasks carrying that tag — handy for "everything NECH-related" or "everything for Tenants."</p>
+        </div>
+      </div>
+    </section>
+
     <section class="card help-card" id="statuses">
       <p class="help-card-label">Reference</p>
       <h2>What the statuses mean</h2>
@@ -156,11 +187,38 @@ require __DIR__ . '/includes/layout/header.php';
       </div>
     </section>
 
+    <section class="card help-card" id="big-picture">
+      <p class="help-card-label">Features</p>
+      <h2>Seeing the big picture</h2>
+      <div class="detail-grid">
+        <div>
+          <span class="dl-label">Status history</span>
+          <p class="dl-value">The dashboard shows a strip of small squares next to the latest update — one per past weekly update, coloured red/amber/green — so you can spot a trend (steady, improving, slipping) at a glance instead of reading back through the archive.</p>
+        </div>
+        <div>
+          <span class="dl-label">Milestone roadmap</span>
+          <p class="dl-value">The <a href="<?= APP_URL ?>/milestones/index.php">Milestones</a> page opens with a timeline of every milestone, grouped by phase and coloured by status, with a dashed line marking today — the whole programme's shape in one view. Click any marker to jump to that milestone.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card help-card" id="quick-add">
+      <p class="help-card-label">Features</p>
+      <h2>Adding things quickly</h2>
+      <p class="dl-value">
+        Admins get a <strong>+</strong> button in the bottom-right corner of every page. Click it, pick what you're
+        adding (task, milestone, risk/issue, decision, or supplier activity), fill in just the essentials, and hit
+        <strong>Add &amp; add another</strong> — the dialog stays open and clears itself so you can log several
+        things back-to-back without navigating anywhere. Press <strong>Done</strong> when you're finished and the
+        page refreshes to show what you added.
+      </p>
+    </section>
+
     <section class="card help-card" id="typical-week">
       <p class="help-card-label">Workflow</p>
       <h2>A typical week</h2>
       <ol style="margin:0; padding-left:1.25rem; line-height:1.9;">
-        <li>Through the week: log tasks, risks, decisions, supplier activity and milestones as they come up — don't save it all for one sitting.</li>
+        <li>Through the week: log tasks, risks, decisions, supplier activity and milestones as they come up — don't save it all for one sitting. The <strong>+</strong> button is the fastest way in.</li>
         <li>At your chosen cadence (weekly by default): an admin publishes a <a href="<?= APP_URL ?>/updates/create.php">weekly update</a>, using the live counts on that page as a reference.</li>
         <li>The dashboard always shows the most recent update — anyone can check it without digging through the archive.</li>
         <li>Past updates stay in the <a href="<?= APP_URL ?>/updates/index.php">weekly archive</a> so you can see how things have progressed (or not) over time.</li>

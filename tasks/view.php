@@ -24,6 +24,7 @@ if (!$task) {
     flash('error', 'Task not found.');
     redirect(APP_URL . '/tasks/index.php');
 }
+$taskTags = get_tags_for($db, 'task', $id);
 
 $pageTitle  = $task['title'];
 $activePage = 'tasks';
@@ -34,6 +35,7 @@ require __DIR__ . '/../includes/layout/header.php';
   <div>
     <h1><?= e($task['title']) ?></h1>
     <p><span class="pill pill--<?= e($task['status']) ?>"><?= e(str_replace('_', ' ', $task['status'])) ?></span></p>
+    <?php if ($taskTags): ?><p><?= render_tag_pills($taskTags) ?></p><?php endif; ?>
   </div>
   <?php if (is_admin()): ?>
   <div class="page-header-actions">

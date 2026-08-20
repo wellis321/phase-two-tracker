@@ -104,3 +104,19 @@ INSERT INTO pm_weekly_snapshots
  'Escalating supplier delays directly with technical leads (not just account managers) got a faster response this time.',
  'Design Authority sign-off due 18 Sep. Pilot environment stand-up targeted for November, DPIA review by end of October.',
  7, '2026-08-19 09:20:00');
+
+-- Tag categories/tags (System, Stakeholder, Section)
+INSERT INTO pm_tag_categories (name, sort_order) VALUES
+  ('System', 1), ('Stakeholder', 2), ('Section', 3);
+
+INSERT INTO pm_tags (category_id, name)
+SELECT c.id, t.name FROM pm_tag_categories c
+JOIN (
+  SELECT 'System' cat, 'ROCC' name UNION ALL
+  SELECT 'System', 'NECH' UNION ALL
+  SELECT 'System', 'APEX' UNION ALL
+  SELECT 'Stakeholder', 'Tenants' UNION ALL
+  SELECT 'Stakeholder', 'Staff' UNION ALL
+  SELECT 'Section', 'Property Services' UNION ALL
+  SELECT 'Section', 'Business Support'
+) t ON t.cat = c.name;

@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['delete'])) {
         $db->prepare('DELETE FROM pm_tasks WHERE id = ?')->execute([$id]);
+        $db->prepare("DELETE FROM pm_taggables WHERE taggable_type = 'task' AND taggable_id = ?")->execute([$id]);
         flash('success', 'Task deleted.');
         redirect(APP_URL . '/tasks/index.php');
     }
@@ -44,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $f['assignee_user_id'] = $_POST['assignee_user_id'] ?? '';
     $f['status']           = $_POST['status'] ?? 'todo';
     $f['due_date']         = $_POST['due_date'] ?? '';
+    $selectedTagIds        = array_map('intval', $_POST['tag_ids'] ?? []);
 
     if ($f['title'] === '') $errors[] = 'Title is required.';
     if (!in_array($f['status'], ['todo', 'in_progress', 'done'], true)) $errors[] = 'Invalid status.';
@@ -59,13 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $f['due_date'] ?: null,
             $id,
         ]);
+        save_tags_for($db, 'task', $id, $selectedTagIds);
         flash('success', "Task '{$f['title']}' updated.");
         redirect(APP_URL . '/tasks/index.php');
     }
 }
 
 render:
-$users = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
+$users      = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
+$categories = get_tag_categories($db);
+if (!isset($selectedTagIds)) {
+    $selectedTagIds = get_tag_ids_for($db, 'task', $id);
+}
 
 $pageTitle  = 'Edit Task';
 $activePage = 'tasks';
@@ -108,6 +115,10 @@ require __DIR__ . '/../includes/layout/header.php';
       <div class="field">
         <label for="due_date">Due date</label>
         <input type="date" id="due_date" name="due_date" value="<?= e($f['due_date']) ?>">
+      </div>
+      <div class="field form-full">
+        <label>Tags</label>
+        <?= render_tag_checkboxes($categories, $selectedTagIds) ?>
       </div>
     </div>
     <div class="form-actions">

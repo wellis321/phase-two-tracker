@@ -104,6 +104,97 @@ function format_date(?string $date): string
     return $ts ? date('j M Y', $ts) : e($date);
 }
 
+/**
+ * @return array<int, array{id:int, name:string, tags: array<int, array{id:int, name:string}>}>
+ */
+function get_tag_categories(PDO $db): array
+{
+    $categories = $db->query(
+        'SELECT id, name FROM pm_tag_categories ORDER BY sort_order, name'
+    )->fetchAll();
+    $tags = $db->query(
+        'SELECT id, category_id, name FROM pm_tags ORDER BY name'
+    )->fetchAll();
+
+    $byCategory = [];
+    foreach ($tags as $t) {
+        $byCategory[(int)$t['category_id']][] = ['id' => (int)$t['id'], 'name' => $t['name']];
+    }
+    return array_map(fn($c) => [
+        'id'   => (int)$c['id'],
+        'name' => $c['name'],
+        'tags' => $byCategory[(int)$c['id']] ?? [],
+    ], $categories);
+}
+
+/** @return int[] */
+function get_tag_ids_for(PDO $db, string $taggableType, int $taggableId): array
+{
+    $stmt = $db->prepare('SELECT tag_id FROM pm_taggables WHERE taggable_type = ? AND taggable_id = ?');
+    $stmt->execute([$taggableType, $taggableId]);
+    return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+}
+
+/**
+ * @return array<int, array{id:int, name:string, category:string}>
+ */
+function get_tags_for(PDO $db, string $taggableType, int $taggableId): array
+{
+    $stmt = $db->prepare(
+        'SELECT t.id, t.name, c.name AS category
+         FROM pm_taggables x
+         JOIN pm_tags t ON t.id = x.tag_id
+         JOIN pm_tag_categories c ON c.id = t.category_id
+         WHERE x.taggable_type = ? AND x.taggable_id = ?
+         ORDER BY c.sort_order, t.name'
+    );
+    $stmt->execute([$taggableType, $taggableId]);
+    return $stmt->fetchAll();
+}
+
+/** @param int[] $tagIds */
+function save_tags_for(PDO $db, string $taggableType, int $taggableId, array $tagIds): void
+{
+    $db->prepare('DELETE FROM pm_taggables WHERE taggable_type = ? AND taggable_id = ?')
+       ->execute([$taggableType, $taggableId]);
+    if (!$tagIds) return;
+    $stmt = $db->prepare('INSERT IGNORE INTO pm_taggables (tag_id, taggable_type, taggable_id) VALUES (?, ?, ?)');
+    foreach (array_unique(array_map('intval', $tagIds)) as $tagId) {
+        $stmt->execute([$tagId, $taggableType, $taggableId]);
+    }
+}
+
+function render_tag_pills(array $tags): string
+{
+    if (!$tags) return '';
+    $out = '<span class="tag-pills">';
+    foreach ($tags as $t) {
+        $out .= '<span class="tag-pill" title="' . e($t['category']) . '">' . e($t['name']) . '</span>';
+    }
+    return $out . '</span>';
+}
+
+/**
+ * Renders the grouped tag checkboxes used on create/edit forms and quick-add.
+ * @param array<int, array{id:int, name:string, tags: array}> $categories
+ * @param int[] $selectedTagIds
+ */
+function render_tag_checkboxes(array $categories, array $selectedTagIds, string $namePrefix = 'tag_ids'): string
+{
+    if (!$categories) return '<p class="empty-note">No tags set up yet.</p>';
+    $out = '<div class="tag-picker">';
+    foreach ($categories as $c) {
+        if (!$c['tags']) continue;
+        $out .= '<div class="tag-picker-group"><span class="tag-picker-label">' . e($c['name']) . '</span><div class="tag-picker-options">';
+        foreach ($c['tags'] as $t) {
+            $checked = in_array($t['id'], $selectedTagIds, true) ? ' checked' : '';
+            $out .= '<label class="tag-picker-option"><input type="checkbox" name="' . e($namePrefix) . '[]" value="' . (int)$t['id'] . '"' . $checked . '> ' . e($t['name']) . '</label>';
+        }
+        $out .= '</div></div>';
+    }
+    return $out . '</div>';
+}
+
 function days_until(?string $date): ?int
 {
     if (!$date) return null;
