@@ -110,25 +110,26 @@ require __DIR__ . '/includes/layout/header.php';
       <p class="help-card-label">Concepts</p>
       <h2>Tags — organise things your way</h2>
       <p class="dl-value" style="margin-bottom:1rem;">
-        Tasks can carry your own labels, grouped into categories you define — for example a
-        <strong>System</strong> category holding <span class="tag-pill">ROCC</span> <span class="tag-pill">NECH</span>
-        <span class="tag-pill">APEX</span>, a <strong>Stakeholder</strong> category holding
-        <span class="tag-pill">Tenants</span> <span class="tag-pill">Staff</span>, or a <strong>Section</strong> category for
-        <span class="tag-pill">Property Services</span> <span class="tag-pill">Business Support</span>. There's nothing
-        fixed about these — add whatever categories and tags actually make sense for how your team talks about the work.
+        Tasks can carry your own labels — there's no fixed list, you build the whole thing. Any tag can have
+        child tags under it, so you might have a top-level <strong>System</strong> tag with
+        <span class="tag-pill">ROCC</span> <span class="tag-pill">NECH</span> <span class="tag-pill">APEX</span>
+        nested underneath, a <strong>Stakeholder</strong> tag with <span class="tag-pill">Tenants</span>
+        <span class="tag-pill">Staff</span> under it, and so on — as many levels deep as you need. Any tag can
+        also carry its own custom fields (a name and a value you make up), for whatever extra detail is worth
+        keeping — an address for a section, a contract reference for a system, anything.
       </p>
       <div class="detail-grid">
         <div>
           <span class="dl-label">Managing tags</span>
-          <p class="dl-value">Admins go to <a href="<?= APP_URL ?>/tags/index.php">Tags</a> (linked from the Tasks page) to add categories, add tags within them, rename either with the pencil icon, or delete them.</p>
+          <p class="dl-value">Admins go to <a href="<?= APP_URL ?>/tags/index.php">Tags</a> (linked from the Tasks page) to add tags, nest them under a parent, add custom fields to any tag, rename anything with the pencil icon, or delete it (deleting a tag also removes its children and fields).</p>
         </div>
         <div>
           <span class="dl-label">Applying tags</span>
-          <p class="dl-value">Pick any number of tags, grouped by category, when adding or editing a task — or via the quick-add button. They show as small pills under the task title.</p>
+          <p class="dl-value">Pick any number of tags, shown indented to match the hierarchy, when adding or editing a task — or via the quick-add button. They show as small pills under the task title.</p>
         </div>
         <div>
           <span class="dl-label">Filtering by tag</span>
-          <p class="dl-value">The Tag dropdown on the Tasks page shows only tasks carrying that tag — handy for "everything NECH-related" or "everything for Tenants."</p>
+          <p class="dl-value">The Tag dropdown on the Tasks page shows only tasks carrying that exact tag — handy for "everything NECH-related" or "everything for Tenants."</p>
         </div>
       </div>
     </section>

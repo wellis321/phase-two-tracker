@@ -108,25 +108,31 @@ CREATE TABLE IF NOT EXISTS pm_weekly_snapshots (
   CONSTRAINT fk_pm_snapshots_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- User-defined categorisation (e.g. category "System" holding tags "ROCC",
--- "NECH", "APEX"; category "Stakeholder" holding "Tenants", "Staff"). Admins
--- manage categories/tags on the Tags page; taggable_type/taggable_id is a
--- generic pointer so tags can attach to any pm_* record, not just tasks.
-CREATE TABLE IF NOT EXISTS pm_tag_categories (
-  id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
-  name          VARCHAR(100)  NOT NULL,
-  sort_order    INT UNSIGNED  NOT NULL DEFAULT 0,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_category_name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+-- User-defined tags, freely nestable (parent_id NULL = top-level, e.g. a
+-- "System" tag with "ROCC"/"NECH"/"APEX" nested underneath it). Uniqueness
+-- of a tag's name among its siblings is enforced in application code (see
+-- tag_name_taken() in includes/functions.php) rather than a DB constraint,
+-- since MySQL unique indexes don't treat NULL parent_id values as equal.
+-- taggable_type/taggable_id on pm_taggables is a generic pointer so tags can
+-- attach to any pm_* record, not just tasks.
 CREATE TABLE IF NOT EXISTS pm_tags (
   id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
-  category_id   INT UNSIGNED  NOT NULL,
+  parent_id     INT UNSIGNED  NULL,
   name          VARCHAR(100)  NOT NULL,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_tag_in_category (category_id, name),
-  CONSTRAINT fk_pm_tags_category FOREIGN KEY (category_id) REFERENCES pm_tag_categories(id) ON DELETE CASCADE
+  KEY idx_parent (parent_id),
+  CONSTRAINT fk_pm_tags_parent FOREIGN KEY (parent_id) REFERENCES pm_tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Free-form custom fields on a tag (e.g. "Address" -> "2 Spiersbridge Way").
+CREATE TABLE IF NOT EXISTS pm_tag_fields (
+  id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  tag_id        INT UNSIGNED  NOT NULL,
+  field_name    VARCHAR(100)  NOT NULL,
+  field_value   TEXT,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_tag (tag_id),
+  CONSTRAINT fk_pm_tag_fields_tag FOREIGN KEY (tag_id) REFERENCES pm_tags(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS pm_taggables (

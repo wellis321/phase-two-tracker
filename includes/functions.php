@@ -105,26 +105,62 @@ function format_date(?string $date): string
 }
 
 /**
- * @return array<int, array{id:int, name:string, tags: array<int, array{id:int, name:string}>}>
+ * Nested tree of every tag: id, name, fields (free-form key/value pairs),
+ * and children (same shape). Top-level tags have no parent.
+ * @return array<int, array{id:int, name:string, fields: array, children: array}>
  */
-function get_tag_categories(PDO $db): array
+function get_tag_tree(PDO $db): array
 {
-    $categories = $db->query(
-        'SELECT id, name FROM pm_tag_categories ORDER BY sort_order, name'
-    )->fetchAll();
-    $tags = $db->query(
-        'SELECT id, category_id, name FROM pm_tags ORDER BY name'
-    )->fetchAll();
+    $rows = $db->query('SELECT id, parent_id, name FROM pm_tags ORDER BY name')->fetchAll();
+    $fieldRows = $db->query('SELECT id, tag_id, field_name, field_value FROM pm_tag_fields ORDER BY id')->fetchAll();
 
-    $byCategory = [];
-    foreach ($tags as $t) {
-        $byCategory[(int)$t['category_id']][] = ['id' => (int)$t['id'], 'name' => $t['name']];
+    $fieldsByTag = [];
+    foreach ($fieldRows as $f) {
+        $fieldsByTag[(int)$f['tag_id']][] = ['id' => (int)$f['id'], 'name' => $f['field_name'], 'value' => $f['field_value']];
     }
-    return array_map(fn($c) => [
-        'id'   => (int)$c['id'],
-        'name' => $c['name'],
-        'tags' => $byCategory[(int)$c['id']] ?? [],
-    ], $categories);
+
+    $childrenOf = [];
+    foreach ($rows as $r) {
+        $key = $r['parent_id'] !== null ? (int)$r['parent_id'] : 0;
+        $childrenOf[$key][] = $r;
+    }
+
+    $build = function (int $parentKey) use (&$build, $childrenOf, $fieldsByTag): array {
+        $out = [];
+        foreach ($childrenOf[$parentKey] ?? [] as $r) {
+            $id = (int)$r['id'];
+            $out[] = [
+                'id'       => $id,
+                'name'     => $r['name'],
+                'fields'   => $fieldsByTag[$id] ?? [],
+                'children' => $build($id),
+            ];
+        }
+        return $out;
+    };
+
+    return $build(0);
+}
+
+/**
+ * Flattens get_tag_tree() into depth-first order with a depth for indentation.
+ * @return array<int, array{id:int, name:string, depth:int}>
+ */
+function flatten_tag_tree(array $tree, int $depth = 0): array
+{
+    $out = [];
+    foreach ($tree as $node) {
+        $out[] = ['id' => $node['id'], 'name' => $node['name'], 'depth' => $depth];
+        $out = array_merge($out, flatten_tag_tree($node['children'], $depth + 1));
+    }
+    return $out;
+}
+
+function tag_name_taken(PDO $db, ?int $parentId, string $name, int $excludeId = 0): bool
+{
+    $stmt = $db->prepare('SELECT COUNT(*) FROM pm_tags WHERE name = ? AND parent_id <=> ? AND id != ?');
+    $stmt->execute([$name, $parentId, $excludeId]);
+    return (int)$stmt->fetchColumn() > 0;
 }
 
 /** @return int[] */
@@ -136,17 +172,17 @@ function get_tag_ids_for(PDO $db, string $taggableType, int $taggableId): array
 }
 
 /**
- * @return array<int, array{id:int, name:string, category:string}>
+ * @return array<int, array{id:int, name:string, parent_name: ?string}>
  */
 function get_tags_for(PDO $db, string $taggableType, int $taggableId): array
 {
     $stmt = $db->prepare(
-        'SELECT t.id, t.name, c.name AS category
+        'SELECT t.id, t.name, p.name AS parent_name
          FROM pm_taggables x
          JOIN pm_tags t ON t.id = x.tag_id
-         JOIN pm_tag_categories c ON c.id = t.category_id
+         LEFT JOIN pm_tags p ON p.id = t.parent_id
          WHERE x.taggable_type = ? AND x.taggable_id = ?
-         ORDER BY c.sort_order, t.name'
+         ORDER BY t.name'
     );
     $stmt->execute([$taggableType, $taggableId]);
     return $stmt->fetchAll();
@@ -169,28 +205,27 @@ function render_tag_pills(array $tags): string
     if (!$tags) return '';
     $out = '<span class="tag-pills">';
     foreach ($tags as $t) {
-        $out .= '<span class="tag-pill" title="' . e($t['category']) . '">' . e($t['name']) . '</span>';
+        $title = $t['parent_name'] ?? null;
+        $out .= '<span class="tag-pill"' . ($title ? ' title="' . e($title) . '"' : '') . '>' . e($t['name']) . '</span>';
     }
     return $out . '</span>';
 }
 
 /**
- * Renders the grouped tag checkboxes used on create/edit forms and quick-add.
- * @param array<int, array{id:int, name:string, tags: array}> $categories
+ * Renders every tag as an indented checkbox list (depth-first), for
+ * create/edit forms and quick-add's tag picker.
+ * @param array $tree get_tag_tree() output
  * @param int[] $selectedTagIds
  */
-function render_tag_checkboxes(array $categories, array $selectedTagIds, string $namePrefix = 'tag_ids'): string
+function render_tag_checkboxes(array $tree, array $selectedTagIds, string $namePrefix = 'tag_ids'): string
 {
-    if (!$categories) return '<p class="empty-note">No tags set up yet.</p>';
+    $flat = flatten_tag_tree($tree);
+    if (!$flat) return '<p class="empty-note">No tags set up yet.</p>';
     $out = '<div class="tag-picker">';
-    foreach ($categories as $c) {
-        if (!$c['tags']) continue;
-        $out .= '<div class="tag-picker-group"><span class="tag-picker-label">' . e($c['name']) . '</span><div class="tag-picker-options">';
-        foreach ($c['tags'] as $t) {
-            $checked = in_array($t['id'], $selectedTagIds, true) ? ' checked' : '';
-            $out .= '<label class="tag-picker-option"><input type="checkbox" name="' . e($namePrefix) . '[]" value="' . (int)$t['id'] . '"' . $checked . '> ' . e($t['name']) . '</label>';
-        }
-        $out .= '</div></div>';
+    foreach ($flat as $t) {
+        $checked = in_array($t['id'], $selectedTagIds, true) ? ' checked' : '';
+        $out .= '<label class="tag-picker-option" style="padding-left:' . ($t['depth'] * 1.15) . 'rem;">'
+              . '<input type="checkbox" name="' . e($namePrefix) . '[]" value="' . (int)$t['id'] . '"' . $checked . '> ' . e($t['name']) . '</label>';
     }
     return $out . '</div>';
 }

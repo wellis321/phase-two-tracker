@@ -68,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 render:
-$users      = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
-$categories = get_tag_categories($db);
+$users   = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
+$tagTree = get_tag_tree($db);
 if (!isset($selectedTagIds)) {
     $selectedTagIds = get_tag_ids_for($db, 'task', $id);
 }
@@ -118,7 +118,7 @@ require __DIR__ . '/../includes/layout/header.php';
       </div>
       <div class="field form-full">
         <label>Tags</label>
-        <?= render_tag_checkboxes($categories, $selectedTagIds) ?>
+        <?= render_tag_checkboxes($tagTree, $selectedTagIds) ?>
       </div>
     </div>
     <div class="form-actions">

@@ -694,33 +694,6 @@ tbody tr:hover td { background: #f8fbf9; }
   border: 1px solid #cfe4dc;
   white-space: nowrap;
 }
-.tag-pill--removable form { display: inline; margin: 0; }
-.tag-pill--removable button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: .1rem;
-  cursor: pointer;
-  color: var(--green-dark);
-  font-size: .9rem;
-  line-height: 1;
-}
-.tag-pill--removable button:hover { color: var(--red); }
-.tag-pill--removable [data-edit-toggle] { font-size: .72rem; }
-.tag-pill--removable [data-edit-toggle]:hover { color: var(--green); }
-
-.tag-pill--edit-form { padding: .1rem .3rem .1rem .5rem; gap: .3rem; }
-.tag-pill--edit-form input[type="text"] {
-  font-family: var(--font);
-  font-size: .72rem;
-  padding: .05rem .3rem;
-  border: 1px solid var(--border);
-  width: 100px;
-}
-.tag-pill--edit-form button { background: none; border: none; padding: 0 .1rem; cursor: pointer; font-size: .85rem; line-height: 1; color: var(--green-dark); }
-.tag-pill--edit-form button[aria-label="Save"]:hover { color: var(--green); }
-.tag-pill--edit-form button[aria-label="Cancel"]:hover { color: var(--red); }
-
 .tag-add-form { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .tag-add-form input[type="text"] {
   flex: 1 1 220px;
@@ -733,18 +706,72 @@ tbody tr:hover td { background: #f8fbf9; }
   color: var(--text);
 }
 .tag-add-form input[type="text"]:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(0,106,81,.12); }
+.tag-add-form select {
+  font-family: var(--font);
+  font-size: .85rem;
+  padding: .4rem .6rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
 
 .editable-view[hidden], .editable-form[hidden] { display: none; }
 
-.tag-category-view { display: flex; align-items: center; gap: 1rem; flex: 1; }
-.tag-category-view h2 { margin: 0; }
-.tag-category-actions { display: flex; gap: .4rem; margin-left: auto; }
-.tag-category-form { flex: 1; }
+.tag-node { padding: .5rem 0; border-bottom: 1px solid var(--border); }
+.tag-node:last-child { border-bottom: none; }
+.tag-node-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.tag-node-name-view { display: flex; align-items: center; gap: .4rem; }
+.tag-node-name-view strong { font-size: .92rem; }
+.tag-node-actions { display: flex; gap: .4rem; flex-shrink: 0; }
 
-.tag-picker { display: flex; flex-direction: column; gap: .75rem; }
-.tag-picker-label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: .35rem; }
-.tag-picker-options { display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
-.tag-picker-option { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; font-weight: 400; cursor: pointer; white-space: nowrap; }
+.tag-inline-form { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+.tag-inline-form input[type="text"] {
+  font-family: var(--font);
+  font-size: .85rem;
+  padding: .35rem .55rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.tag-inline-form input[type="text"]:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(0,106,81,.12); }
+
+.tag-fields { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .45rem; }
+.field-pill-view button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: .25rem;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1;
+}
+.field-pill-view button:hover { color: var(--red); }
+.field-pill-view [data-edit-toggle]:hover { color: var(--green-dark); }
+.field-pill-view form { display: inline; margin: 0; }
+
+.field-pill-edit-form {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .1rem .3rem .1rem .5rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: .72rem;
+}
+.field-pill-edit-form input[type="text"] {
+  font-family: var(--font);
+  font-size: .72rem;
+  padding: .05rem .3rem;
+  border: 1px solid var(--border);
+  width: 90px;
+}
+.field-pill-edit-form button { background: none; border: none; padding: 0 .1rem; cursor: pointer; font-size: .85rem; line-height: 1; color: var(--green-dark); }
+.field-pill-edit-form button[aria-label="Save"]:hover { color: var(--green); }
+.field-pill-edit-form button[aria-label="Cancel"]:hover { color: var(--red); }
+
+.tag-picker { display: flex; flex-direction: column; gap: .3rem; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); padding: .6rem .75rem; background: var(--bg); }
+.tag-picker-option { display: flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 400; cursor: pointer; white-space: nowrap; }
 .tag-picker-option input[type="checkbox"] { width: auto; height: auto; margin: 0; padding: 0; border: none; background: none; flex: none; }
 
 /* ─── Detail view ─────────────────────────────── */

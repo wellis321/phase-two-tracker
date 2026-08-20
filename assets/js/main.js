@@ -29,3 +29,22 @@ document.querySelectorAll('.editable-wrap').forEach(function (wrap) {
     });
   }
 });
+
+// Generic reveal panel: a [data-show-target] button un-hides the element
+// with that id and focuses its first text input; a [data-hide-self] button
+// inside that element hides its own closest form/panel again.
+document.querySelectorAll('[data-show-target]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var el = document.getElementById(btn.dataset.showTarget);
+    if (!el) return;
+    el.hidden = false;
+    var input = el.querySelector('input[type="text"]');
+    if (input) input.focus();
+  });
+});
+document.querySelectorAll('[data-hide-self]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var panel = btn.closest('[id]');
+    if (panel) panel.hidden = true;
+  });
+});

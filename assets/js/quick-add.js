@@ -74,19 +74,17 @@
     tagsLoaded = true;
     var picker = document.getElementById('qa-tag-picker');
     if (!picker) return;
-    fetch(endpoint + '?action=categories', { credentials: 'same-origin' })
+    fetch(endpoint + '?action=tags', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var categories = (data.categories || []).filter(function (c) { return c.tags && c.tags.length; });
-        if (!categories.length) {
+        var tags = data.tags || [];
+        if (!tags.length) {
           picker.innerHTML = '<p class="empty-note">No tags set up yet.</p>';
           return;
         }
-        picker.innerHTML = categories.map(function (c) {
-          var options = c.tags.map(function (t) {
-            return '<label class="tag-picker-option"><input type="checkbox" name="tag_ids[]" value="' + t.id + '"> ' + escapeHtml(t.name) + '</label>';
-          }).join('');
-          return '<div class="tag-picker-group"><span class="tag-picker-label">' + escapeHtml(c.name) + '</span><div class="tag-picker-options">' + options + '</div></div>';
+        picker.innerHTML = tags.map(function (t) {
+          var indent = (t.depth * 1.15) + 'rem';
+          return '<label class="tag-picker-option" style="padding-left:' + indent + ';"><input type="checkbox" name="tag_ids[]" value="' + t.id + '"> ' + escapeHtml(t.name) + '</label>';
         }).join('');
       })
       .catch(function () { picker.innerHTML = ''; });

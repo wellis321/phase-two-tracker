@@ -105,18 +105,19 @@ INSERT INTO pm_weekly_snapshots
  'Design Authority sign-off due 18 Sep. Pilot environment stand-up targeted for November, DPIA review by end of October.',
  7, '2026-08-19 09:20:00');
 
--- Tag categories/tags (System, Stakeholder, Section)
-INSERT INTO pm_tag_categories (name, sort_order) VALUES
-  ('System', 1), ('Stakeholder', 2), ('Section', 3);
+-- Tags: top-level System/Stakeholder/Section, each with children nested under it
+INSERT INTO pm_tags (parent_id, name) VALUES
+  (NULL, 'System'), (NULL, 'Stakeholder'), (NULL, 'Section');
 
-INSERT INTO pm_tags (category_id, name)
-SELECT c.id, t.name FROM pm_tag_categories c
+INSERT INTO pm_tags (parent_id, name)
+SELECT top.id, t.name FROM pm_tags top
 JOIN (
-  SELECT 'System' cat, 'ROCC' name UNION ALL
+  SELECT 'System' top_name, 'ROCC' name UNION ALL
   SELECT 'System', 'NECH' UNION ALL
   SELECT 'System', 'APEX' UNION ALL
   SELECT 'Stakeholder', 'Tenants' UNION ALL
   SELECT 'Stakeholder', 'Staff' UNION ALL
   SELECT 'Section', 'Property Services' UNION ALL
   SELECT 'Section', 'Business Support'
-) t ON t.cat = c.name;
+) t ON t.top_name = top.name
+WHERE top.parent_id IS NULL;

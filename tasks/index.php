@@ -33,20 +33,21 @@ $tasks = $db->prepare(
 $tasks->execute($params);
 $tasks = $tasks->fetchAll();
 
-$tagCategories = get_tag_categories($db);
-$taskTagsById  = [];
+$tagTree      = get_tag_tree($db);
+$flatTags     = flatten_tag_tree($tagTree);
+$taskTagsById = [];
 if ($tasks) {
     $ids = implode(',', array_map(fn($t) => (int)$t['id'], $tasks));
     $rows = $db->query(
-        "SELECT x.taggable_id, tg.id AS tag_id, tg.name, c.name AS category
+        "SELECT x.taggable_id, tg.id AS tag_id, tg.name, p.name AS parent_name
          FROM pm_taggables x
          JOIN pm_tags tg ON tg.id = x.tag_id
-         JOIN pm_tag_categories c ON c.id = tg.category_id
+         LEFT JOIN pm_tags p ON p.id = tg.parent_id
          WHERE x.taggable_type = 'task' AND x.taggable_id IN ($ids)
-         ORDER BY c.sort_order, tg.name"
+         ORDER BY tg.name"
     )->fetchAll();
     foreach ($rows as $r) {
-        $taskTagsById[(int)$r['taggable_id']][] = ['id' => (int)$r['tag_id'], 'name' => $r['name'], 'category' => $r['category']];
+        $taskTagsById[(int)$r['taggable_id']][] = ['id' => (int)$r['tag_id'], 'name' => $r['name'], 'parent_name' => $r['parent_name']];
     }
 }
 
@@ -79,17 +80,13 @@ require __DIR__ . '/../includes/layout/header.php';
         <option value="done" <?= $statusFilter === 'done' ? 'selected' : '' ?>>Done</option>
       </select>
     </div>
-    <?php if ($tagCategories): ?>
+    <?php if ($flatTags): ?>
     <div class="field">
       <label for="tag">Tag</label>
       <select id="tag" name="tag" onchange="this.form.submit()">
         <option value="">All</option>
-        <?php foreach ($tagCategories as $c): if (!$c['tags']) continue; ?>
-        <optgroup label="<?= e($c['name']) ?>">
-          <?php foreach ($c['tags'] as $t): ?>
-          <option value="<?= $t['id'] ?>" <?= $tagFilter === $t['id'] ? 'selected' : '' ?>><?= e($t['name']) ?></option>
-          <?php endforeach; ?>
-        </optgroup>
+        <?php foreach ($flatTags as $t): ?>
+        <option value="<?= $t['id'] ?>" <?= $tagFilter === $t['id'] ? 'selected' : '' ?>><?= str_repeat('&nbsp;&nbsp;', $t['depth']) . e($t['name']) ?></option>
         <?php endforeach; ?>
       </select>
     </div>
