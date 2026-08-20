@@ -511,6 +511,24 @@ tbody tr:hover td { background: #f8fbf9; }
 .login-logo .app { display: block; color: var(--muted); font-size: .9rem; }
 .login-note { margin-top: 1rem; font-size: .78rem; color: var(--muted); text-align: center; }
 
+/* ─── Back link ───────────────────────────────── */
+.back-nav {
+  margin: 1.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--green-dark);
+  text-decoration: none;
+}
+.back-link svg { width: 14px; height: 14px; flex-shrink: 0; }
+.back-link:hover { color: var(--green); text-decoration: underline; }
+
 /* ─── Detail view ─────────────────────────────── */
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1.5rem; }
 @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr; } }

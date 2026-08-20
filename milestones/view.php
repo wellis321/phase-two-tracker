@@ -66,6 +66,6 @@ require __DIR__ . '/../includes/layout/header.php';
   </div>
 </div>
 
-<p><a href="<?= APP_URL ?>/milestones/index.php">&larr; Back to milestones</a></p>
+<p class="back-nav"><a class="back-link" href="<?= APP_URL ?>/milestones/index.php"><?= icon_arrow_left() ?> Back to milestones</a></p>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>

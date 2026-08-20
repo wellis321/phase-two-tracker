@@ -75,6 +75,6 @@ require __DIR__ . '/../includes/layout/header.php';
   <?php endif; ?>
 </div>
 
-<p><a href="<?= APP_URL ?>/decisions/index.php">&larr; Back to decisions</a></p>
+<p class="back-nav"><a class="back-link" href="<?= APP_URL ?>/decisions/index.php"><?= icon_arrow_left() ?> Back to decisions</a></p>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>

@@ -54,6 +54,6 @@ function section(string $label, ?string $body): void
   ?>
 </div>
 
-<p><a href="<?= APP_URL ?>/updates/index.php">&larr; Back to archive</a></p>
+<p class="back-nav"><a class="back-link" href="<?= APP_URL ?>/updates/index.php"><?= icon_arrow_left() ?> Back to archive</a></p>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>
