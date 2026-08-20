@@ -48,9 +48,9 @@ require __DIR__ . '/../includes/layout/header.php';
       <tr><td colspan="4" class="empty-note">No updates published yet.</td></tr>
       <?php endif; ?>
       <?php foreach ($snapshots as $s): ?>
-      <tr>
+      <tr class="table-row--clickable" data-href="<?= APP_URL ?>/updates/view.php?id=<?= (int)$s['id'] ?>">
         <td><?= rag_badge($s['overall_status']) ?></td>
-        <td><a href="<?= APP_URL ?>/updates/view.php?id=<?= (int)$s['id'] ?>"><?= e($s['period_label']) ?></a></td>
+        <td><a href="<?= APP_URL ?>/updates/view.php?id=<?= (int)$s['id'] ?>" class="table-entity-link"><?= e($s['period_label']) ?></a></td>
         <td><?= e(date('j M Y', strtotime($s['created_at']))) ?></td>
         <td><?= e($s['display_name'] ?: $s['username'] ?: '—') ?></td>
       </tr>

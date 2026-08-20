@@ -23,6 +23,11 @@ $latestSnapshot = $db->query(
      ORDER BY s.created_at DESC LIMIT 1'
 )->fetch();
 
+$statusHistory = $db->query(
+    "SELECT overall_status, period_label, created_at FROM pm_weekly_snapshots ORDER BY created_at DESC LIMIT 14"
+)->fetchAll();
+$statusHistory = array_reverse($statusHistory);
+
 $openTasks    = (int)$db->query("SELECT COUNT(*) FROM pm_tasks WHERE status != 'done'")->fetchColumn();
 $openRisks    = (int)$db->query("SELECT COUNT(*) FROM pm_risks_issues WHERE status != 'closed'")->fetchColumn();
 $openDecisions = (int)$db->query("SELECT COUNT(*) FROM pm_decisions WHERE status = 'open'")->fetchColumn();
@@ -93,6 +98,17 @@ require __DIR__ . '/includes/layout/header.php';
         · <a href="<?= APP_URL ?>/updates/index.php">View archive</a>
       </div>
     </div>
+    <?php if (count($statusHistory) > 1): ?>
+    <div class="status-history-inline">
+      <span class="status-history-caption">Status history &middot; last <?= count($statusHistory) ?></span>
+      <div class="status-history-strip">
+        <?php foreach ($statusHistory as $h): $lvl = strtolower((string)$h['overall_status']); $letter = ['red'=>'R','amber'=>'A','green'=>'G'][$lvl] ?? '?'; ?>
+        <span class="status-history-cell status-history-cell--<?= e($lvl) ?>" title="<?= e($h['period_label']) ?> &mdash; <?= e(ucfirst($lvl)) ?> &mdash; <?= e(date('j M Y', strtotime($h['created_at']))) ?>"><?= $letter ?></span>
+        <?php endforeach; ?>
+      </div>
+      <span class="status-history-legend-compact">R off track &middot; A at risk &middot; G on track</span>
+    </div>
+    <?php endif; ?>
   </div>
   <?php if ($latestSnapshot['current_focus'] || $latestSnapshot['progress_narrative'] || $latestSnapshot['looking_ahead_notes']): ?>
   <div class="status-grid">
