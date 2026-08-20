@@ -48,3 +48,34 @@ document.querySelectorAll('[data-hide-self]').forEach(function (btn) {
     if (panel) panel.hidden = true;
   });
 });
+
+// Nav dropdown groups (Work / Reports): click the toggle to open, click
+// elsewhere or press Escape to close. Only one group open at a time.
+document.querySelectorAll('[data-nav-toggle]').forEach(function (toggle) {
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var group = toggle.closest('.nav-group');
+    var wasOpen = group.classList.contains('nav-group--open');
+    document.querySelectorAll('.nav-group--open').forEach(function (g) {
+      g.classList.remove('nav-group--open');
+      g.querySelector('[data-nav-toggle]').setAttribute('aria-expanded', 'false');
+    });
+    if (!wasOpen) {
+      group.classList.add('nav-group--open');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+  });
+});
+document.addEventListener('click', function () {
+  document.querySelectorAll('.nav-group--open').forEach(function (g) {
+    g.classList.remove('nav-group--open');
+    g.querySelector('[data-nav-toggle]').setAttribute('aria-expanded', 'false');
+  });
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.nav-group--open').forEach(function (g) {
+    g.classList.remove('nav-group--open');
+    g.querySelector('[data-nav-toggle]').setAttribute('aria-expanded', 'false');
+  });
+});

@@ -22,6 +22,20 @@ CREATE TABLE IF NOT EXISTS pm_tasks (
   CONSTRAINT fk_pm_tasks_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- task_id depends on depends_on_id (task_id is blocked until depends_on_id is done).
+CREATE TABLE IF NOT EXISTS pm_task_dependencies (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  task_id        INT UNSIGNED NOT NULL,
+  depends_on_id  INT UNSIGNED NOT NULL,
+  created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_dependency (task_id, depends_on_id),
+  KEY idx_task (task_id),
+  KEY idx_depends_on (depends_on_id),
+  CONSTRAINT fk_pm_task_deps_task FOREIGN KEY (task_id) REFERENCES pm_tasks(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pm_task_deps_depends_on FOREIGN KEY (depends_on_id) REFERENCES pm_tasks(id) ON DELETE CASCADE,
+  CONSTRAINT chk_pm_task_deps_not_self CHECK (task_id != depends_on_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS pm_risks_issues (
   id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
   type          ENUM('risk','issue') NOT NULL DEFAULT 'risk',
@@ -116,12 +130,29 @@ CREATE TABLE IF NOT EXISTS pm_agendas (
   title               VARCHAR(150)  NOT NULL,
   meeting_date        DATE,
   location            VARCHAR(150),
-  attendees           TEXT,
   content             TEXT NOT NULL,
   created_by_user_id  INT UNSIGNED,
   created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_created_at (created_at),
   CONSTRAINT fk_pm_agendas_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- One row per person invited to a meeting. user_id links to a real account
+-- when the attendee is internal (so attendance can be aggregated per person
+-- over time); external attendees (suppliers etc.) just have a name. `name`
+-- is always stored as a snapshot, even for linked users, so a later rename
+-- or deactivation doesn't rewrite what a past agenda actually showed.
+CREATE TABLE IF NOT EXISTS pm_agenda_attendees (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  agenda_id   INT UNSIGNED NOT NULL,
+  user_id     INT UNSIGNED NULL,
+  name        VARCHAR(150) NOT NULL,
+  status      ENUM('attending','apologies') NOT NULL DEFAULT 'attending',
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_agenda (agenda_id),
+  KEY idx_user (user_id),
+  CONSTRAINT fk_pm_agenda_attendees_agenda FOREIGN KEY (agenda_id) REFERENCES pm_agendas(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pm_agenda_attendees_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- User-defined tags, freely nestable (parent_id NULL = top-level, e.g. a

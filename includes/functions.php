@@ -108,6 +108,12 @@ function icon_arrow_left(): string
     return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 6 10l6.5 5.5M6 10h9"/></svg>';
 }
 
+/** The site favicon glyph (green rounded square, white checkmark), for letterheads etc. */
+function icon_checkmark_badge(): string
+{
+    return '<svg viewBox="0 0 32 32" role="img" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#006A51"/><path d="M9 16.5l4.5 4.5L23 11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
 function format_date(?string $date): string
 {
     if (!$date) return '—';
@@ -267,6 +273,87 @@ function days_until(?string $date): ?int
 }
 
 /**
+ * Tasks this task depends on (must be done before it can proceed).
+ * @return array<int, array{id:int, title:string, status:string}>
+ */
+function get_task_dependencies(PDO $db, int $taskId): array
+{
+    $stmt = $db->prepare(
+        'SELECT t.id, t.title, t.status
+         FROM pm_task_dependencies d
+         JOIN pm_tasks t ON t.id = d.depends_on_id
+         WHERE d.task_id = ?
+         ORDER BY t.title'
+    );
+    $stmt->execute([$taskId]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Tasks that depend on this task (what it's blocking).
+ * @return array<int, array{id:int, title:string, status:string}>
+ */
+function get_task_dependents(PDO $db, int $taskId): array
+{
+    $stmt = $db->prepare(
+        'SELECT t.id, t.title, t.status
+         FROM pm_task_dependencies d
+         JOIN pm_tasks t ON t.id = d.task_id
+         WHERE d.depends_on_id = ?
+         ORDER BY t.title'
+    );
+    $stmt->execute([$taskId]);
+    return $stmt->fetchAll();
+}
+
+/** @param int[] $dependsOnIds */
+function save_task_dependencies(PDO $db, int $taskId, array $dependsOnIds): void
+{
+    $db->prepare('DELETE FROM pm_task_dependencies WHERE task_id = ?')->execute([$taskId]);
+    $ids = array_unique(array_filter(array_map('intval', $dependsOnIds), fn($id) => $id !== $taskId));
+    if (!$ids) return;
+    $stmt = $db->prepare('INSERT IGNORE INTO pm_task_dependencies (task_id, depends_on_id) VALUES (?, ?)');
+    foreach ($ids as $depId) {
+        $stmt->execute([$taskId, $depId]);
+    }
+}
+
+/** @param array<int, array{status: string}> $dependencies */
+function task_is_blocked(array $dependencies): bool
+{
+    foreach ($dependencies as $d) {
+        if ($d['status'] !== 'done') return true;
+    }
+    return false;
+}
+
+/** Human label for a task status value. */
+function task_status_label(string $status): string
+{
+    return ['todo' => 'To do', 'in_progress' => 'In progress', 'done' => 'Done'][$status] ?? $status;
+}
+
+/**
+ * Renders the pre-selected dependency chips for a task edit/create form.
+ * New chips are added client-side via search (see tasks/search.php and
+ * assets/js/task-deps.js) rather than pre-loading every task in the
+ * system, which doesn't scale once there are thousands of them.
+ * @param array<int, array{id:int, title:string, status:string}> $dependencyTasks
+ */
+function render_task_dependency_chips(array $dependencyTasks): string
+{
+    $out = '';
+    foreach ($dependencyTasks as $t) {
+        $out .= '<div class="attendee-chip" data-id="' . (int)$t['id'] . '">'
+              . '<span class="attendee-chip-name">' . e($t['title']) . ' <span class="dep-picker-status">(' . e(task_status_label($t['status'])) . ')</span></span>'
+              . '<button type="button" class="attendee-chip-remove" aria-label="Remove ' . e($t['title']) . '">&times;</button>'
+              . '<input type="hidden" name="depends_on_ids[]" value="' . (int)$t['id'] . '">'
+              . '</div>';
+    }
+    return $out;
+}
+
+/**
  * Drafts a plain-text meeting agenda from current status, open decisions,
  * open risks/issues, and upcoming/at-risk milestones. Meant to be edited
  * before publishing, not used verbatim.
@@ -332,8 +419,16 @@ function generate_agenda_draft(PDO $db): string
 
     $lines[] = '3. RISKS & ISSUES';
     if ($risks) {
+        $bySeverity = ['red' => [], 'amber' => [], 'green' => []];
         foreach ($risks as $r) {
-            $lines[] = '   - [' . strtoupper((string)$r['severity']) . '] ' . $r['title'] . ' (' . ucfirst((string)$r['type']) . ')';
+            $bySeverity[$r['severity']][] = $r;
+        }
+        foreach (['red', 'amber', 'green'] as $severity) {
+            if (!$bySeverity[$severity]) continue;
+            $lines[] = '   ' . ucfirst($severity);
+            foreach ($bySeverity[$severity] as $r) {
+                $lines[] = '   - ' . $r['title'] . ' (' . ucfirst((string)$r['type']) . ')';
+            }
         }
     } else {
         $lines[] = '   - None currently open.';
@@ -358,6 +453,38 @@ function generate_agenda_draft(PDO $db): string
     $lines[] = '';
 
     return implode("\n", $lines);
+}
+
+/**
+ * Replaces the attendee list for an agenda.
+ * @param array<int, array{user_id: ?int, name: string, status: string}> $rows
+ */
+function save_agenda_attendees(PDO $db, int $agendaId, array $rows): void
+{
+    $db->prepare('DELETE FROM pm_agenda_attendees WHERE agenda_id = ?')->execute([$agendaId]);
+    if (!$rows) return;
+    $stmt = $db->prepare(
+        'INSERT INTO pm_agenda_attendees (agenda_id, user_id, name, status) VALUES (?, ?, ?, ?)'
+    );
+    foreach ($rows as $r) {
+        $stmt->execute([$agendaId, $r['user_id'] ?: null, $r['name'], $r['status']]);
+    }
+}
+
+/**
+ * @return array{attending: array<int, array{name:string, user_id:?int}>, apologies: array<int, array{name:string, user_id:?int}>}
+ */
+function get_agenda_attendees(PDO $db, int $agendaId): array
+{
+    $stmt = $db->prepare(
+        'SELECT user_id, name, status FROM pm_agenda_attendees WHERE agenda_id = ? ORDER BY name'
+    );
+    $stmt->execute([$agendaId]);
+    $out = ['attending' => [], 'apologies' => []];
+    foreach ($stmt->fetchAll() as $r) {
+        $out[$r['status']][] = ['name' => $r['name'], 'user_id' => $r['user_id'] !== null ? (int)$r['user_id'] : null];
+    }
+    return $out;
 }
 
 /**

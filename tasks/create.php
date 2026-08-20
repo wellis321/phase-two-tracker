@@ -12,6 +12,8 @@ $db = db();
 $f = ['title' => '', 'description' => '', 'assignee_user_id' => '', 'status' => 'todo', 'due_date' => ''];
 $errors = [];
 $selectedTagIds = [];
+$selectedDepIds = [];
+$dependencyTasks = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
@@ -24,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $f['status']           = $_POST['status'] ?? 'todo';
     $f['due_date']         = $_POST['due_date'] ?? '';
     $selectedTagIds        = array_map('intval', $_POST['tag_ids'] ?? []);
+    $selectedDepIds         = array_map('intval', $_POST['depends_on_ids'] ?? []);
 
     if ($f['title'] === '') $errors[] = 'Title is required.';
     if (!in_array($f['status'], ['todo', 'in_progress', 'done'], true)) $errors[] = 'Invalid status.';
@@ -40,7 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $f['due_date'] ?: null,
             get_current_user_id(),
         ]);
-        save_tags_for($db, 'task', (int)$db->lastInsertId(), $selectedTagIds);
+        $newTaskId = (int)$db->lastInsertId();
+        save_tags_for($db, 'task', $newTaskId, $selectedTagIds);
+        save_task_dependencies($db, $newTaskId, $selectedDepIds);
         flash('success', "Task '{$f['title']}' created.");
         redirect(APP_URL . '/tasks/index.php');
     }
@@ -49,6 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 render:
 $users   = $db->query("SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)")->fetchAll();
 $tagTree = get_tag_tree($db);
+if ($selectedDepIds) {
+    $placeholders = implode(',', array_fill(0, count($selectedDepIds), '?'));
+    $depStmt = $db->prepare("SELECT id, title, status FROM pm_tasks WHERE id IN ($placeholders) ORDER BY title");
+    $depStmt->execute($selectedDepIds);
+    $dependencyTasks = $depStmt->fetchAll();
+}
 
 $pageTitle  = 'Add Task';
 $activePage = 'tasks';
@@ -98,6 +109,17 @@ require __DIR__ . '/../includes/layout/header.php';
         <label>Tags</label>
         <?= render_tag_checkboxes($tagTree, $selectedTagIds) ?>
       </div>
+      <div class="field form-full">
+        <label for="dep-search">Depends on</label>
+        <div id="dep-picker" data-search-url="<?= APP_URL ?>/tasks/search.php" data-exclude="0">
+          <div class="dep-search-wrap">
+            <input type="text" id="dep-search" placeholder="Search tasks by title&hellip;" autocomplete="off">
+            <div id="dep-search-results" class="dep-search-results" hidden></div>
+          </div>
+          <div id="dep-list" class="attendee-list"><?= render_task_dependency_chips($dependencyTasks) ?></div>
+          <p class="empty-note" id="dep-empty" <?= $dependencyTasks ? 'hidden' : '' ?>>No dependencies added.</p>
+        </div>
+      </div>
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn--primary">Save</button>
@@ -105,5 +127,7 @@ require __DIR__ . '/../includes/layout/header.php';
     </div>
   </form>
 </div>
+
+<script src="<?= asset_url('/assets/js/task-deps.js') ?>"></script>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>

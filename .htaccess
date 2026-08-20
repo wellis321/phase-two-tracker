@@ -6,6 +6,7 @@ Options -Indexes
     RewriteEngine On
     RewriteRule ^sql/        - [F,L]
     RewriteRule ^includes/   - [F,L]
+    RewriteRule ^vendor/     - [F,L]
 </IfModule>
 
 <Files ".env">

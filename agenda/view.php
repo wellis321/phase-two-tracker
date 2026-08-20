@@ -22,11 +22,20 @@ if (!$agenda) {
     flash('error', 'Agenda not found.');
     redirect(APP_URL . '/agenda/index.php');
 }
+$attendees = get_agenda_attendees($db, $id);
 
 $pageTitle  = $agenda['title'];
 $activePage = 'agendas';
 require __DIR__ . '/../includes/layout/header.php';
 ?>
+
+<div class="agenda-letterhead">
+  <span class="agenda-letterhead-mark"><?= icon_checkmark_badge() ?></span>
+  <span class="agenda-letterhead-text">
+    <span class="agenda-letterhead-org">Repairs Delivery — Phase 2</span>
+    <span class="agenda-letterhead-app">Programme Tracker &middot; Meeting Agenda</span>
+  </span>
+</div>
 
 <div class="page-header">
   <div>
@@ -38,12 +47,32 @@ require __DIR__ . '/../includes/layout/header.php';
       by <?= e($agenda['display_name'] ?: $agenda['username'] ?: 'unknown') ?>
     </p>
   </div>
+  <div class="page-header-actions no-print">
+    <button type="button" id="agenda-copy-link" class="btn btn--outline btn--sm" data-url="<?= e(APP_URL . '/agenda/view.php?id=' . (int)$agenda['id']) ?>">Copy link</button>
+    <a href="<?= APP_URL ?>/agenda/pdf.php?id=<?= (int)$agenda['id'] ?>" class="btn btn--outline btn--sm" target="_blank" rel="noopener">Download PDF</a>
+  </div>
 </div>
 
-<?php if ($agenda['attendees']): ?>
+<?php if ($attendees['attending'] || $attendees['apologies']): ?>
 <div class="card" style="margin-bottom:1rem;">
-  <span class="dl-label">Attendees</span>
-  <p class="dl-value" style="margin-bottom:0;"><?= e($agenda['attendees']) ?></p>
+  <div class="detail-grid">
+    <div>
+      <span class="dl-label">Attending (<?= count($attendees['attending']) ?>)</span>
+      <?php if ($attendees['attending']): ?>
+      <p class="dl-value" style="margin-bottom:0;"><?= implode(', ', array_map('e', array_column($attendees['attending'], 'name'))) ?></p>
+      <?php else: ?>
+      <p class="dl-value" style="margin-bottom:0;">&mdash;</p>
+      <?php endif; ?>
+    </div>
+    <div>
+      <span class="dl-label">Apologies (<?= count($attendees['apologies']) ?>)</span>
+      <?php if ($attendees['apologies']): ?>
+      <p class="dl-value" style="margin-bottom:0;"><?= implode(', ', array_map('e', array_column($attendees['apologies'], 'name'))) ?></p>
+      <?php else: ?>
+      <p class="dl-value" style="margin-bottom:0;">&mdash;</p>
+      <?php endif; ?>
+    </div>
+  </div>
 </div>
 <?php endif; ?>
 
@@ -51,6 +80,8 @@ require __DIR__ . '/../includes/layout/header.php';
   <pre class="agenda-content"><?= e($agenda['content']) ?></pre>
 </div>
 
-<p class="back-nav"><a class="back-link" href="<?= APP_URL ?>/agenda/index.php"><?= icon_arrow_left() ?> Back to agendas</a></p>
+<p class="back-nav no-print"><a class="back-link" href="<?= APP_URL ?>/agenda/index.php"><?= icon_arrow_left() ?> Back to agendas</a></p>
+
+<script src="<?= asset_url('/assets/js/agenda-view.js') ?>"></script>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>

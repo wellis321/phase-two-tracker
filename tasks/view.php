@@ -24,7 +24,10 @@ if (!$task) {
     flash('error', 'Task not found.');
     redirect(APP_URL . '/tasks/index.php');
 }
-$taskTags = get_tags_for($db, 'task', $id);
+$taskTags     = get_tags_for($db, 'task', $id);
+$dependencies = get_task_dependencies($db, $id);
+$dependents   = get_task_dependents($db, $id);
+$isBlocked    = $task['status'] !== 'done' && task_is_blocked($dependencies);
 
 $pageTitle  = $task['title'];
 $activePage = 'tasks';
@@ -34,7 +37,10 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="page-header">
   <div>
     <h1><?= e($task['title']) ?></h1>
-    <p><span class="pill pill--<?= e($task['status']) ?>"><?= e(str_replace('_', ' ', $task['status'])) ?></span></p>
+    <p>
+      <span class="pill pill--<?= e($task['status']) ?>"><?= e(str_replace('_', ' ', $task['status'])) ?></span>
+      <?php if ($isBlocked): ?><span class="pill pill--blocked">Blocked</span><?php endif; ?>
+    </p>
     <?php if ($taskTags): ?><p><?= render_tag_pills($taskTags) ?></p><?php endif; ?>
   </div>
   <?php if (is_admin()): ?>
@@ -69,6 +75,41 @@ require __DIR__ . '/../includes/layout/header.php';
     </div>
   </div>
 </div>
+
+<?php if ($dependencies || $dependents): ?>
+<div class="card" style="margin-top:1rem;">
+  <div class="detail-grid">
+    <div>
+      <span class="dl-label">Depends on</span>
+      <?php if ($dependencies): ?>
+      <p class="dl-value" style="margin-bottom:0;">
+        <?php foreach ($dependencies as $d): ?>
+        <a href="<?= APP_URL ?>/tasks/view.php?id=<?= (int)$d['id'] ?>" class="table-entity-link">
+          <span class="pill pill--<?= e($d['status']) ?>"><?= e(str_replace('_', ' ', $d['status'])) ?></span> <?= e($d['title']) ?>
+        </a><br>
+        <?php endforeach; ?>
+      </p>
+      <?php else: ?>
+      <p class="dl-value" style="margin-bottom:0;">&mdash;</p>
+      <?php endif; ?>
+    </div>
+    <div>
+      <span class="dl-label">Blocks</span>
+      <?php if ($dependents): ?>
+      <p class="dl-value" style="margin-bottom:0;">
+        <?php foreach ($dependents as $d): ?>
+        <a href="<?= APP_URL ?>/tasks/view.php?id=<?= (int)$d['id'] ?>" class="table-entity-link">
+          <span class="pill pill--<?= e($d['status']) ?>"><?= e(str_replace('_', ' ', $d['status'])) ?></span> <?= e($d['title']) ?>
+        </a><br>
+        <?php endforeach; ?>
+      </p>
+      <?php else: ?>
+      <p class="dl-value" style="margin-bottom:0;">&mdash;</p>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 
 <p class="back-nav"><a class="back-link" href="<?= APP_URL ?>/tasks/index.php"><?= icon_arrow_left() ?> Back to tasks</a></p>
 

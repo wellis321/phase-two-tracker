@@ -51,6 +51,18 @@ if ($tasks) {
     }
 }
 
+$blockedTaskIds = [];
+if ($tasks) {
+    $ids = implode(',', array_map(fn($t) => (int)$t['id'], $tasks));
+    $blockedTaskIds = $db->query(
+        "SELECT DISTINCT d.task_id
+         FROM pm_task_dependencies d
+         JOIN pm_tasks dep ON dep.id = d.depends_on_id
+         WHERE d.task_id IN ($ids) AND dep.status != 'done'"
+    )->fetchAll(PDO::FETCH_COLUMN);
+    $blockedTaskIds = array_map('intval', $blockedTaskIds);
+}
+
 $pageTitle  = 'Tasks';
 $activePage = 'tasks';
 require __DIR__ . '/../includes/layout/header.php';
@@ -118,7 +130,12 @@ require __DIR__ . '/../includes/layout/header.php';
           <?php endif; ?>
         </td>
         <td><?= e($t['display_name'] ?: $t['username'] ?: '—') ?></td>
-        <td><span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_', ' ', $t['status'])) ?></span></td>
+        <td>
+          <span class="pill pill--<?= e($t['status']) ?>"><?= e(str_replace('_', ' ', $t['status'])) ?></span>
+          <?php if ($t['status'] !== 'done' && in_array((int)$t['id'], $blockedTaskIds, true)): ?>
+          <span class="pill pill--blocked">Blocked</span>
+          <?php endif; ?>
+        </td>
         <td><?= format_date($t['due_date']) ?></td>
         <?php if (is_admin()): ?>
         <td class="col-actions"><a href="<?= APP_URL ?>/tasks/edit.php?id=<?= (int)$t['id'] ?>" class="icon-btn" title="Edit" aria-label="Edit"><?= icon_edit() ?></a></td>

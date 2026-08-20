@@ -35,6 +35,7 @@ require __DIR__ . '/includes/layout/header.php';
     <a href="#big-picture">Seeing the big picture</a>
     <a href="#quick-add">Adding things quickly</a>
     <a href="#agendas">Publishing a meeting agenda</a>
+    <a href="#task-dependencies">Task dependencies</a>
     <p class="help-nav-section">Workflow</p>
     <a href="#typical-week">A typical week</a>
   </nav>
@@ -98,7 +99,7 @@ require __DIR__ . '/includes/layout/header.php';
             <tr><td>A fixed date or checkpoint the programme needs to hit</td><td><strong>Milestone</strong></td></tr>
             <tr><td>A piece of work someone on the team needs to do</td><td><strong>Task</strong></td></tr>
             <tr><td>Something that might go wrong (but might not)</td><td><strong>Risk</strong></td></tr>
-            <tr><td>Something that's happening now and needs fixing</td><td><strong>Issue</strong></td></tr>
+            <tr><td>Something that's happening now and needs addressing</td><td><strong>Issue</strong></td></tr>
             <tr><td>A choice that needs to be made by someone, by a date</td><td><strong>Decision</strong></td></tr>
             <tr><td>Work that's on the supplier's plate, not ours</td><td><strong>Supplier activity</strong></td></tr>
             <tr><td>A summary of where things stand right now</td><td><strong>Weekly update</strong></td></tr>
@@ -237,7 +238,23 @@ require __DIR__ . '/includes/layout/header.php';
     <section class="card help-card" id="agendas">
       <p class="help-card-label">Features</p>
       <h2>Publishing a meeting agenda</h2>
-      <p class="dl-value">The <a href="<?= APP_URL ?>/agenda/index.php">Agendas</a> page generates a draft agenda from whatever's live right now — overall status, open decisions, open risks and issues, and upcoming or at-risk milestones — as one editable block of text. Add a title, meeting date, location, and attendees alongside it. Nothing in the text is fixed: rewrite it, delete sections, add your own, or hit <strong>Regenerate from current data</strong> to pull a fresh draft (this keeps the title, date, location, and attendees you've typed, but replaces the agenda text). Publishing saves it to the archive exactly as you left it, so past agendas stay a record of what was actually in front of the room, not a live query that changes after the fact.</p>
+      <p class="dl-value">The <a href="<?= APP_URL ?>/agenda/index.php">Agendas</a> page generates a draft agenda from whatever's live right now — overall status, open decisions, open risks and issues grouped by severity, and upcoming or at-risk milestones — as one editable block of text. Add a title, meeting date, and location alongside it. For attendees, search for a person and add them one at a time, then toggle each between <strong>Attending</strong> and <strong>Apologies</strong> — plus a free-text box each for external people like suppliers. Because attendance is tracked against real accounts rather than typed names, it stays consistent enough to look back over later — who's been at what, and when. Nothing in the agenda text itself is fixed: rewrite it, delete sections, add your own, or hit <strong>Regenerate from current data</strong> to pull a fresh draft (this keeps everything else on the form, just replaces the text). Publishing saves it to the archive exactly as you left it, so past agendas stay a record of what was actually in front of the room, not a live query that changes after the fact.</p>
+      <div class="detail-grid" style="margin-top:1rem;">
+        <div>
+          <span class="dl-label">Sharing</span>
+          <p class="dl-value"><strong>Copy link</strong> on a published agenda copies a direct URL anyone signed in can open — handy for pasting into an email or a meeting invite.</p>
+        </div>
+        <div>
+          <span class="dl-label">PDF</span>
+          <p class="dl-value"><strong>Download PDF</strong> generates a proper PDF file with the same green letterhead, rather than relying on your browser's own print dialog — consistent output for everyone, and it deliberately leaves off the "published by" line since that's not meant for the document itself.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card help-card" id="task-dependencies">
+      <p class="help-card-label">Features</p>
+      <h2>Task dependencies</h2>
+      <p class="dl-value">Any task can depend on other tasks that need finishing first. On the Add/Edit Task form, search for a task by title and add it under <strong>Depends on</strong> — this works by searching as you type rather than listing every task, so it stays usable how many ever exist. A task with an unfinished dependency shows a <strong>Blocked</strong> pill, both in the tasks list and on the task itself, and its detail page lists what it's waiting on ("Depends on") and what's waiting on it ("Blocks") so you can trace either direction.</p>
     </section>
 
     <section class="card help-card" id="typical-week">
