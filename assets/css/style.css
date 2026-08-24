@@ -625,6 +625,47 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--border); }
 .lesson-figure figcaption { margin-top: .35rem; font-size: .75rem; color: var(--muted); text-align: center; line-height: 1.4; }
 @media (max-width: 560px) { .lesson-figure { float: none; width: 100%; max-width: 220px; margin: 0 auto 1rem; } }
+
+.lineage-card { margin-bottom: 1rem; overflow: hidden; }
+.lineage-timeline { overflow-x: auto; padding: .5rem 0 .75rem; }
+.lineage-track { position: relative; display: flex; gap: 1.75rem; padding: 0 .25rem; min-width: max-content; }
+.lineage-track::before {
+  content: "";
+  position: absolute;
+  top: 26px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+.lineage-node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 92px;
+  text-decoration: none;
+  color: var(--text);
+  flex: none;
+}
+.lineage-portrait {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--surface);
+  background-size: cover;
+  background-position: center top;
+  border: 2px solid var(--green);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+.lineage-portrait--blank { background-color: var(--green-light); }
+.lineage-node:hover .lineage-portrait { border-color: var(--green-dark); }
+.lineage-year { margin-top: .4rem; font-size: .7rem; font-weight: 700; color: var(--green-dark); }
+.lineage-title { margin-top: .1rem; font-size: .74rem; color: var(--muted); text-align: center; line-height: 1.25; }
+.lineage-node:hover .lineage-title { color: var(--text); }
+
 .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
 .lesson-nav-link { flex: 1; }
 .lesson-nav-link--next { text-align: right; }

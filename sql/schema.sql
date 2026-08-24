@@ -265,6 +265,12 @@ CREATE TABLE IF NOT EXISTS pm_learning_lessons (
   summary       VARCHAR(300) NULL,
   content       LONGTEXT NULL,
   sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+  -- Optional: when a lesson centres on a dated figure or work, year_label is
+  -- the display text (e.g. "384-322 BC") and year_sort an orderable number
+  -- (negative for BC) used only to position it on the course's lineage
+  -- timeline — not used for reading order, which stays sort_order.
+  year_label    VARCHAR(50) NULL,
+  year_sort     INT NULL,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_module (module_id),

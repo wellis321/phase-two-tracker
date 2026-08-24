@@ -24,21 +24,35 @@ if (!$lesson) {
 }
 
 $errors = [];
-$f = ['title' => $lesson['title'], 'summary' => $lesson['summary'] ?? '', 'content' => $lesson['content'] ?? ''];
+$f = [
+    'title'      => $lesson['title'],
+    'summary'    => $lesson['summary'] ?? '',
+    'content'    => $lesson['content'] ?? '',
+    'year_label' => $lesson['year_label'] ?? '',
+    'year_sort'  => $lesson['year_sort'] !== null ? (string)$lesson['year_sort'] : '',
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
         $errors[] = 'Invalid form token, please try again.';
     } else {
-        $f['title']   = trim($_POST['title'] ?? '');
-        $f['summary'] = trim($_POST['summary'] ?? '');
-        $f['content'] = $_POST['content'] ?? '';
+        $f['title']      = trim($_POST['title'] ?? '');
+        $f['summary']    = trim($_POST['summary'] ?? '');
+        $f['content']    = $_POST['content'] ?? '';
+        $f['year_label'] = trim($_POST['year_label'] ?? '');
+        $f['year_sort']  = trim($_POST['year_sort'] ?? '');
+        $yearSort        = $f['year_sort'];
 
         if ($f['title'] === '') $errors[] = 'Title is required.';
+        if ($f['year_label'] !== '' && $yearSort === '') $errors[] = 'Add a sort year (e.g. -380 for 380 BC) so this lesson can be placed on the timeline.';
 
         if (!$errors) {
-            $db->prepare('UPDATE pm_learning_lessons SET title = ?, summary = ?, content = ? WHERE id = ?')
-               ->execute([$f['title'], $f['summary'] ?: null, $f['content'], $id]);
+            $db->prepare('UPDATE pm_learning_lessons SET title = ?, summary = ?, content = ?, year_label = ?, year_sort = ? WHERE id = ?')
+               ->execute([
+                   $f['title'], $f['summary'] ?: null, $f['content'],
+                   $f['year_label'] ?: null, $yearSort !== '' ? (int)$yearSort : null,
+                   $id,
+               ]);
             flash('success', 'Lesson saved.');
             redirect(APP_URL . '/learning/course.php?id=' . (int)$lesson['course_id']);
         }
@@ -71,6 +85,15 @@ require __DIR__ . '/../includes/layout/header.php';
         <label for="summary">Summary <span style="color:var(--muted); font-weight:400; text-transform:none;">(shown in the lesson list — optional)</span></label>
         <input type="text" id="summary" name="summary" value="<?= e($f['summary']) ?>">
       </div>
+      <div class="field">
+        <label for="year_label">Timeline year <span style="color:var(--muted); font-weight:400; text-transform:none;">(optional)</span></label>
+        <input type="text" id="year_label" name="year_label" value="<?= e($f['year_label']) ?>" placeholder="e.g. 1859 or c. 380 BC">
+      </div>
+      <div class="field">
+        <label for="year_sort">Sort year <span style="color:var(--muted); font-weight:400; text-transform:none;">(number, negative for BC)</span></label>
+        <input type="number" id="year_sort" name="year_sort" value="<?= e($f['year_sort']) ?>" placeholder="e.g. -380">
+      </div>
+      <p class="empty-note form-full" style="margin:-.5rem 0 0;">Setting both places this lesson on the course's lineage timeline, using the first portrait image in its content as the thumbnail. Leave blank to leave it off the timeline.</p>
       <div class="field form-full">
         <label for="content">Content</label>
         <textarea id="content" name="content" rows="24" style="font-family: 'IBM Plex Sans', sans-serif;"><?= e($f['content']) ?></textarea>

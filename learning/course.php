@@ -78,7 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 render:
-$course = get_course_with_modules($db, $id, get_current_user_id());
+$course   = get_course_with_modules($db, $id, get_current_user_id());
+$timeline = get_course_timeline($db, $id);
 if (!$course) {
     flash('error', 'Course not found.');
     redirect(APP_URL . '/learning/index.php');
@@ -125,6 +126,14 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1><?= e($course['title']) ?></h1>
     <?php if ($course['description']): ?><p><?= e($course['description']) ?></p><?php endif; ?>
   </div>
+</div>
+<?php endif; ?>
+
+<?php if ($timeline): ?>
+<div class="card lineage-card">
+  <h2 style="margin-top:0;">The lineage, at a glance</h2>
+  <p class="li-meta" style="margin-top:-.3rem;">Every dated figure or work this course covers, in order. Click one to jump to its lesson.</p>
+  <?= render_course_timeline($timeline) ?>
 </div>
 <?php endif; ?>
 

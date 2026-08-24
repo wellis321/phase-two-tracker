@@ -1103,6 +1103,59 @@ function get_learning_courses(PDO $db, int $userId): array
     return $out;
 }
 
+/** Renders a horizontal, scrollable lineage timeline from get_course_timeline()'s output. */
+function render_course_timeline(array $timeline): string
+{
+    if (!$timeline) return '';
+    $out = '<div class="lineage-timeline"><div class="lineage-track">';
+    foreach ($timeline as $point) {
+        $out .= '<a class="lineage-node" href="' . APP_URL . '/learning/lesson.php?id=' . $point['id'] . '">';
+        if ($point['imageUrl']) {
+            $out .= '<span class="lineage-portrait" style="background-image:url(\'' . e($point['imageUrl']) . '\');"></span>';
+        } else {
+            $out .= '<span class="lineage-portrait lineage-portrait--blank" aria-hidden="true"></span>';
+        }
+        $out .= '<span class="lineage-year">' . e($point['yearLabel']) . '</span>';
+        $out .= '<span class="lineage-title">' . e($point['title']) . '</span>';
+        $out .= '</a>';
+    }
+    return $out . '</div></div>';
+}
+
+/**
+ * The lineage timeline for a course: every lesson that's been given a
+ * year_label, in chronological order, with the first portrait image
+ * found in its content (if any) reused as the timeline thumbnail —
+ * lessons opt into this just by having a year set, nothing else to author.
+ * @return array<int, array{id:int, title:string, yearLabel:string, imageUrl:?string}>
+ */
+function get_course_timeline(PDO $db, int $courseId): array
+{
+    $stmt = $db->prepare(
+        "SELECT l.id, l.title, l.year_label, l.content
+         FROM pm_learning_lessons l
+         JOIN pm_learning_modules m ON m.id = l.module_id
+         WHERE m.course_id = ? AND l.year_label IS NOT NULL
+         ORDER BY l.year_sort"
+    );
+    $stmt->execute([$courseId]);
+
+    $out = [];
+    foreach ($stmt->fetchAll() as $row) {
+        $imageUrl = null;
+        if ($row['content'] && preg_match('/!\[[^\]]*\]\((https:\/\/[^\s)]+)\)/', $row['content'], $m)) {
+            $imageUrl = $m[1];
+        }
+        $out[] = [
+            'id'        => (int)$row['id'],
+            'title'     => $row['title'],
+            'yearLabel' => $row['year_label'],
+            'imageUrl'  => $imageUrl,
+        ];
+    }
+    return $out;
+}
+
 /** @return ?array{id:int,title:string,description:?string,modules:array<int,array{id:int,title:string,description:?string,lessons:array<int,array{id:int,title:string,summary:?string,completed:bool}>}>} */
 function get_course_with_modules(PDO $db, int $courseId, int $userId): ?array
 {
