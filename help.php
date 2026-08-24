@@ -37,6 +37,7 @@ require __DIR__ . '/includes/layout/header.php';
     <a href="#agendas">Publishing a meeting agenda</a>
     <a href="#task-dependencies">Task dependencies</a>
     <a href="#discussion">Flagging things for discussion</a>
+    <a href="#learning">Shared Learning</a>
     <p class="help-nav-section">Workflow</p>
     <a href="#typical-week">A typical week</a>
   </nav>
@@ -262,6 +263,12 @@ require __DIR__ . '/includes/layout/header.php';
       <p class="help-card-label">Features</p>
       <h2>Flagging things for discussion</h2>
       <p class="dl-value">Anyone signed in can click the flag icon next to a task, milestone, risk/issue, decision, or supplier item — on its own page, or right on the dashboard — to raise it as something worth talking about as a team. Flagging it again removes your flag; if more than one person flags the same thing, everyone's initials show against it, so you can see how many people think it matters. Everything flagged shows up on the <a href="<?= APP_URL ?>/discussion/index.php">Discussion</a> page, where anyone can add or edit a shared note capturing what the discussion is actually about — expected to change as the team learns more. Once it's been talked through, an admin can add it to the next agenda draft, which moves it into a "Raised by the team" section the next time someone generates one; publishing that agenda records which meeting it went to. An admin can also click <strong>Generate discussion agenda</strong> at any time to draft a standalone agenda just for talking through what's currently flagged — every open item is included by default, but untick any you'd like to leave out first. This doesn't change anything about the items themselves; it's just a snapshot to work from in the meeting.</p>
+    </section>
+
+    <section class="card help-card" id="learning">
+      <p class="help-card-label">Features</p>
+      <h2>Shared Learning</h2>
+      <p class="dl-value">The <a href="<?= APP_URL ?>/learning/index.php">Learning</a> page is a shared library of courses anyone signed in can work through — separate from the rest of the tracker, and not tied to any one project. Admins build a course as modules, each holding a set of lessons; a lesson is just a title, an optional summary, and its content, written with a couple of simple conventions — a blank line starts a new paragraph, a line starting with <code>## </code> becomes a heading, <code>- </code> starts a bullet list, <code>&gt; </code> becomes a quote, and <code>[label](https://url)</code> anywhere becomes a link. Anyone reading a lesson can mark it complete, and each course shows how far through it you are — useful for working through something at your own pace rather than in one sitting.</p>
     </section>
 
     <section class="card help-card" id="typical-week">

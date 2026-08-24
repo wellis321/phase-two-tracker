@@ -932,3 +932,237 @@ function build_milestone_roadmap(array $milestones, bool $hideCompletePhases = f
         'toPct'       => $toPct,
     ];
 }
+
+/* ---------------------------------------------------------------------
+ * Shared Learning: courses -> modules -> lessons, with per-user progress.
+ * ------------------------------------------------------------------- */
+
+/**
+ * Escapes text, then turns "[label](https://url)" into a real link.
+ * The regex runs on the already-escaped string, so both the visible label
+ * and the href (which needs its own & etc. escaped for a valid attribute)
+ * come out safe without a second escaping pass.
+ */
+function render_lesson_inline(string $text): string
+{
+    $escaped = e($text);
+    return preg_replace(
+        '/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/',
+        '<a href="$2" target="_blank" rel="noopener">$1</a>',
+        $escaped
+    );
+}
+
+/**
+ * Renders lesson body text into safe HTML using a tiny, dependency-free
+ * convention: blank lines separate paragraphs, "## " starts a heading,
+ * "- " lines group into a bullet list, "> " lines group into a quote, and
+ * "[label](https://url)" anywhere becomes a link. Everything else is
+ * escaped — this is not a raw-HTML field.
+ */
+function render_lesson_content(string $raw): string
+{
+    $lines = explode("\n", str_replace("\r\n", "\n", trim($raw)));
+    $out = '';
+    $paragraph = [];
+    $list = [];
+    $quote = [];
+
+    $flushParagraph = function () use (&$paragraph, &$out) {
+        if ($paragraph) {
+            $out .= '<p>' . render_lesson_inline(implode(' ', $paragraph)) . '</p>';
+            $paragraph = [];
+        }
+    };
+    $flushList = function () use (&$list, &$out) {
+        if ($list) {
+            $out .= '<ul>' . implode('', array_map(fn($i) => '<li>' . render_lesson_inline($i) . '</li>', $list)) . '</ul>';
+            $list = [];
+        }
+    };
+    $flushQuote = function () use (&$quote, &$out) {
+        if ($quote) {
+            $out .= '<blockquote><p>' . render_lesson_inline(implode(' ', $quote)) . '</p></blockquote>';
+            $quote = [];
+        }
+    };
+
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        if ($trimmed === '') {
+            $flushParagraph(); $flushList(); $flushQuote();
+            continue;
+        }
+        if (str_starts_with($trimmed, '## ')) {
+            $flushParagraph(); $flushList(); $flushQuote();
+            $out .= '<h3>' . e(substr($trimmed, 3)) . '</h3>';
+            continue;
+        }
+        if (str_starts_with($trimmed, '- ')) {
+            $flushParagraph(); $flushQuote();
+            $list[] = substr($trimmed, 2);
+            continue;
+        }
+        if (str_starts_with($trimmed, '> ')) {
+            $flushParagraph(); $flushList();
+            $quote[] = substr($trimmed, 2);
+            continue;
+        }
+        $flushList(); $flushQuote();
+        $paragraph[] = $trimmed;
+    }
+    $flushParagraph(); $flushList(); $flushQuote();
+
+    return $out ?: '<p class="empty-note">No content yet.</p>';
+}
+
+/** @return array<int, array{id:int,title:string,description:?string,moduleCount:int,lessonCount:int,completedCount:int}> */
+function get_learning_courses(PDO $db, int $userId): array
+{
+    $courses = $db->query('SELECT * FROM pm_learning_courses ORDER BY sort_order, title')->fetchAll();
+    if (!$courses) return [];
+
+    $courseIds = implode(',', array_map(fn($c) => (int)$c['id'], $courses));
+    $counts = $db->query(
+        "SELECT m.course_id, COUNT(DISTINCT m.id) AS module_count, COUNT(l.id) AS lesson_count
+         FROM pm_learning_modules m
+         LEFT JOIN pm_learning_lessons l ON l.module_id = m.id
+         WHERE m.course_id IN ($courseIds)
+         GROUP BY m.course_id"
+    )->fetchAll();
+    $countsByCourseId = [];
+    foreach ($counts as $c) { $countsByCourseId[(int)$c['course_id']] = $c; }
+
+    $completedByCourseId = [];
+    $completed = $db->prepare(
+        "SELECT m.course_id, COUNT(*) AS n
+         FROM pm_learning_progress p
+         JOIN pm_learning_lessons l ON l.id = p.lesson_id
+         JOIN pm_learning_modules m ON m.id = l.module_id
+         WHERE p.user_id = ? AND m.course_id IN ($courseIds)
+         GROUP BY m.course_id"
+    );
+    $completed->execute([$userId]);
+    foreach ($completed->fetchAll() as $c) { $completedByCourseId[(int)$c['course_id']] = (int)$c['n']; }
+
+    $out = [];
+    foreach ($courses as $c) {
+        $id = (int)$c['id'];
+        $out[] = [
+            'id'             => $id,
+            'title'          => $c['title'],
+            'description'    => $c['description'],
+            'moduleCount'    => (int)($countsByCourseId[$id]['module_count'] ?? 0),
+            'lessonCount'    => (int)($countsByCourseId[$id]['lesson_count'] ?? 0),
+            'completedCount' => $completedByCourseId[$id] ?? 0,
+        ];
+    }
+    return $out;
+}
+
+/** @return ?array{id:int,title:string,description:?string,modules:array<int,array{id:int,title:string,description:?string,lessons:array<int,array{id:int,title:string,summary:?string,completed:bool}>}>} */
+function get_course_with_modules(PDO $db, int $courseId, int $userId): ?array
+{
+    $stmt = $db->prepare('SELECT * FROM pm_learning_courses WHERE id = ?');
+    $stmt->execute([$courseId]);
+    $course = $stmt->fetch();
+    if (!$course) return null;
+
+    $moduleStmt = $db->prepare('SELECT * FROM pm_learning_modules WHERE course_id = ? ORDER BY sort_order, id');
+    $moduleStmt->execute([$courseId]);
+    $modules = $moduleStmt->fetchAll();
+
+    $lessonsByModule = [];
+    $completedLessonIds = [];
+    if ($modules) {
+        $moduleIds = implode(',', array_map(fn($m) => (int)$m['id'], $modules));
+        $lessons = $db->query("SELECT * FROM pm_learning_lessons WHERE module_id IN ($moduleIds) ORDER BY sort_order, id")->fetchAll();
+        foreach ($lessons as $l) {
+            $lessonsByModule[(int)$l['module_id']][] = $l;
+        }
+        if ($lessons) {
+            $lessonIds = implode(',', array_map(fn($l) => (int)$l['id'], $lessons));
+            $progressStmt = $db->prepare("SELECT lesson_id FROM pm_learning_progress WHERE user_id = ? AND lesson_id IN ($lessonIds)");
+            $progressStmt->execute([$userId]);
+            $completedLessonIds = array_map('intval', $progressStmt->fetchAll(PDO::FETCH_COLUMN));
+        }
+    }
+
+    $out = ['id' => (int)$course['id'], 'title' => $course['title'], 'description' => $course['description'], 'modules' => []];
+    foreach ($modules as $m) {
+        $mid = (int)$m['id'];
+        $lessonRows = [];
+        foreach ($lessonsByModule[$mid] ?? [] as $l) {
+            $lessonRows[] = [
+                'id'        => (int)$l['id'],
+                'title'     => $l['title'],
+                'summary'   => $l['summary'],
+                'completed' => in_array((int)$l['id'], $completedLessonIds, true),
+            ];
+        }
+        $out['modules'][] = [
+            'id'          => $mid,
+            'title'       => $m['title'],
+            'description' => $m['description'],
+            'lessons'     => $lessonRows,
+        ];
+    }
+    return $out;
+}
+
+/** @return ?array{id:int,title:string,summary:?string,content:string,moduleId:int,moduleTitle:string,courseId:int,courseTitle:string,completed:bool} */
+function get_lesson(PDO $db, int $lessonId, int $userId): ?array
+{
+    $stmt = $db->prepare(
+        'SELECT l.*, m.id AS module_id, m.title AS module_title, c.id AS course_id, c.title AS course_title
+         FROM pm_learning_lessons l
+         JOIN pm_learning_modules m ON m.id = l.module_id
+         JOIN pm_learning_courses c ON c.id = m.course_id
+         WHERE l.id = ?'
+    );
+    $stmt->execute([$lessonId]);
+    $row = $stmt->fetch();
+    if (!$row) return null;
+
+    $completedStmt = $db->prepare('SELECT COUNT(*) FROM pm_learning_progress WHERE user_id = ? AND lesson_id = ?');
+    $completedStmt->execute([$userId, $lessonId]);
+
+    return [
+        'id'          => (int)$row['id'],
+        'title'       => $row['title'],
+        'summary'     => $row['summary'],
+        'content'     => $row['content'] ?? '',
+        'moduleId'    => (int)$row['module_id'],
+        'moduleTitle' => $row['module_title'],
+        'courseId'    => (int)$row['course_id'],
+        'courseTitle' => $row['course_title'],
+        'completed'   => (int)$completedStmt->fetchColumn() > 0,
+    ];
+}
+
+/** Ordered lesson ids/titles across every module in a course, for prev/next nav. @return array<int, array{id:int,title:string}> */
+function get_lesson_sequence(PDO $db, int $courseId): array
+{
+    $stmt = $db->prepare(
+        'SELECT l.id, l.title
+         FROM pm_learning_lessons l
+         JOIN pm_learning_modules m ON m.id = l.module_id
+         WHERE m.course_id = ?
+         ORDER BY m.sort_order, m.id, l.sort_order, l.id'
+    );
+    $stmt->execute([$courseId]);
+    return $stmt->fetchAll();
+}
+
+/** Toggles completion for one user/lesson pair. Returns the new completed state. */
+function toggle_lesson_progress(PDO $db, int $lessonId, int $userId): bool
+{
+    $stmt = $db->prepare('SELECT id FROM pm_learning_progress WHERE user_id = ? AND lesson_id = ?');
+    $stmt->execute([$userId, $lessonId]);
+    if ($stmt->fetch()) {
+        $db->prepare('DELETE FROM pm_learning_progress WHERE user_id = ? AND lesson_id = ?')->execute([$userId, $lessonId]);
+        return false;
+    }
+    $db->prepare('INSERT INTO pm_learning_progress (user_id, lesson_id) VALUES (?, ?)')->execute([$userId, $lessonId]);
+    return true;
+}

@@ -231,3 +231,57 @@ CREATE TABLE IF NOT EXISTS pm_discussion_flags (
   CONSTRAINT fk_pm_discussion_flags_item FOREIGN KEY (discussion_item_id) REFERENCES pm_discussion_items(id) ON DELETE CASCADE,
   CONSTRAINT fk_pm_discussion_flags_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Shared Learning: a reusable library of courses, each broken into ordered
+-- modules, each holding ordered lessons. Any signed-in user can read;
+-- admins author. Kept separate from the rest of the tracker's pm_* tables
+-- conceptually (no FK into tasks/risks/etc.) since this is general
+-- knowledge content, not programme-tracking data.
+CREATE TABLE IF NOT EXISTS pm_learning_courses (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title         VARCHAR(200) NOT NULL,
+  description   TEXT NULL,
+  sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+  created_by    INT UNSIGNED NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_pm_learning_courses_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pm_learning_modules (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  course_id     INT UNSIGNED NOT NULL,
+  title         VARCHAR(200) NOT NULL,
+  description   TEXT NULL,
+  sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_course (course_id),
+  CONSTRAINT fk_pm_learning_modules_course FOREIGN KEY (course_id) REFERENCES pm_learning_courses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pm_learning_lessons (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  module_id     INT UNSIGNED NOT NULL,
+  title         VARCHAR(200) NOT NULL,
+  summary       VARCHAR(300) NULL,
+  content       LONGTEXT NULL,
+  sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_module (module_id),
+  CONSTRAINT fk_pm_learning_lessons_module FOREIGN KEY (module_id) REFERENCES pm_learning_modules(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Per-user lesson completion. Deliberately shaped close to an xAPI/Tin Can
+-- statement (actor=user_id, object=lesson_id, verb="completed",
+-- timestamp=completed_at) so that if this ever needs to feed a real
+-- Learning Record Store, it's a translation layer on top of this table
+-- rather than a schema rework.
+CREATE TABLE IF NOT EXISTS pm_learning_progress (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT UNSIGNED NOT NULL,
+  lesson_id     INT UNSIGNED NOT NULL,
+  completed_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_progress (user_id, lesson_id),
+  CONSTRAINT fk_pm_learning_progress_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pm_learning_progress_lesson FOREIGN KEY (lesson_id) REFERENCES pm_learning_lessons(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -49,6 +49,7 @@
         </div>
       </div>
 
+      <a href="<?= APP_URL ?>/learning/index.php" class="<?= ($activePage ?? '') === 'learning' ? 'nav--active' : '' ?>">Learning</a>
       <a href="<?= APP_URL ?>/help.php" class="<?= ($activePage ?? '') === 'help' ? 'nav--active' : '' ?>">Help</a>
     </nav>
     <?php if (is_logged_in()): ?>
