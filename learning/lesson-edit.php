@@ -53,7 +53,7 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="page-header">
   <div>
     <h1>Edit lesson</h1>
-    <p>Blank lines start a new paragraph. Start a line with <code>## </code> for a heading, <code>- </code> for a bullet list, or <code>&gt; </code> for a quote.</p>
+    <p>Blank lines start a new paragraph. Start a line with <code>## </code> for a heading, <code>- </code> for a bullet list, or <code>&gt; </code> for a quote. <code>[label](https://url)</code> anywhere becomes a link. <code>![caption](https://url)</code> on its own line becomes a small portrait floated beside the text — must be a Wikimedia Commons image URL.</p>
   </div>
 </div>
 

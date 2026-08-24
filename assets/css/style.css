@@ -609,13 +609,22 @@ tbody tr:hover td { background: #f8fbf9; }
 .learning-lesson-actions { display: flex; gap: .4rem; align-items: center; flex-shrink: 0; }
 
 .lesson-content { font-size: .98rem; line-height: 1.7; }
-.lesson-content h3 { margin: 1.6rem 0 .5rem; font-size: 1.08rem; }
+.lesson-content::after { content: ""; display: table; clear: both; }
+.lesson-content h3 { margin: 1.6rem 0 .5rem; font-size: 1.08rem; clear: both; }
 .lesson-content h3:first-child { margin-top: 0; }
 .lesson-content p { margin: 0 0 1rem; }
 .lesson-content ul { margin: 0 0 1rem; padding-left: 1.4rem; }
 .lesson-content li { margin-bottom: .35rem; }
-.lesson-content blockquote { margin: 0 0 1rem; padding: .6rem 1rem; border-left: 3px solid var(--green); background: var(--green-light); }
+.lesson-content blockquote { margin: 0 0 1rem; padding: .6rem 1rem; border-left: 3px solid var(--green); background: var(--green-light); clear: both; }
 .lesson-content blockquote p { margin: 0; font-style: italic; }
+.lesson-figure {
+  float: right;
+  width: 160px;
+  margin: 0 0 1rem 1.25rem;
+}
+.lesson-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--border); }
+.lesson-figure figcaption { margin-top: .35rem; font-size: .75rem; color: var(--muted); text-align: center; line-height: 1.4; }
+@media (max-width: 560px) { .lesson-figure { float: none; width: 100%; max-width: 220px; margin: 0 auto 1rem; } }
 .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
 .lesson-nav-link { flex: 1; }
 .lesson-nav-link--next { text-align: right; }

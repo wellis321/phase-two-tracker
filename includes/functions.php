@@ -954,11 +954,46 @@ function render_lesson_inline(string $text): string
 }
 
 /**
+ * Image hosts allowed in "![caption](url)" lines. Kept to an allowlist
+ * (rather than any https:// URL, like links get) since an <img> tag pulls
+ * content automatically on page load — worth being more careful about
+ * where that's allowed to come from. Wikimedia Commons covers portraits
+ * for essentially every historical figure this course discusses, and its
+ * images are stably licensed for reuse.
+ * @return string[]
+ */
+function lesson_image_allowed_hosts(): array
+{
+    return ['upload.wikimedia.org', 'commons.wikimedia.org'];
+}
+
+/**
+ * Turns a "![caption](https://url)" line into a small captioned portrait
+ * that floats beside the surrounding paragraph, or null if the line isn't
+ * a valid, allowed image reference.
+ */
+function render_lesson_image(string $line): ?string
+{
+    if (!preg_match('/^!\[([^\]]*)\]\((https:\/\/[^\s)]+)\)$/', trim($line), $m)) {
+        return null;
+    }
+    [, $caption, $url] = $m;
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!in_array($host, lesson_image_allowed_hosts(), true)) {
+        return null;
+    }
+    return '<figure class="lesson-figure"><img src="' . e($url) . '" alt="' . e($caption) . '" loading="lazy">'
+         . ($caption !== '' ? '<figcaption>' . e($caption) . '</figcaption>' : '')
+         . '</figure>';
+}
+
+/**
  * Renders lesson body text into safe HTML using a tiny, dependency-free
  * convention: blank lines separate paragraphs, "## " starts a heading,
- * "- " lines group into a bullet list, "> " lines group into a quote, and
- * "[label](https://url)" anywhere becomes a link. Everything else is
- * escaped — this is not a raw-HTML field.
+ * "- " lines group into a bullet list, "> " lines group into a quote,
+ * "![caption](https://url)" on its own line becomes a floated portrait
+ * (Wikimedia Commons only), and "[label](https://url)" anywhere becomes a
+ * link. Everything else is escaped — this is not a raw-HTML field.
  */
 function render_lesson_content(string $raw): string
 {
@@ -997,6 +1032,14 @@ function render_lesson_content(string $raw): string
             $flushParagraph(); $flushList(); $flushQuote();
             $out .= '<h3>' . e(substr($trimmed, 3)) . '</h3>';
             continue;
+        }
+        if (str_starts_with($trimmed, '![')) {
+            $image = render_lesson_image($trimmed);
+            if ($image !== null) {
+                $flushList(); $flushQuote();
+                $out .= $image;
+                continue;
+            }
         }
         if (str_starts_with($trimmed, '- ')) {
             $flushParagraph(); $flushQuote();
