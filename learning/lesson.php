@@ -131,7 +131,9 @@ require __DIR__ . '/../includes/layout/header.php';
     <form method="POST" action="#quiz-q-<?= $qid ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="submit_reflection" value="<?= $qid ?>">
-      <textarea name="response_text" rows="4" placeholder="Write your own answer first..." style="width:100%;"><?= e((string)($attempt['response_text'] ?? '')) ?></textarea>
+      <div class="field">
+        <textarea name="response_text" rows="4" placeholder="Write your own answer first..."><?= e((string)($attempt['response_text'] ?? '')) ?></textarea>
+      </div>
       <button type="submit" class="btn btn--primary btn--sm" style="margin-top:.5rem;"><?= $attempt ? 'Update my answer' : 'Submit' ?></button>
     </form>
     <?php if ($attempt): ?>
