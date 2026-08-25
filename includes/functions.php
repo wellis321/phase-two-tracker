@@ -1733,3 +1733,18 @@ function quiz_question_save(PDO $db, ?int $questionId, ?int $lessonId, ?int $mod
 
     flash('success', 'Question saved.');
 }
+
+/** Flat, chronological comments on a lesson, oldest first, with the author's display name. */
+function get_lesson_comments(PDO $db, int $lessonId): array
+{
+    $stmt = $db->prepare(
+        "SELECT c.id, c.user_id, c.body, c.created_at,
+                COALESCE(u.display_name, u.username) AS author
+         FROM pm_learning_comments c
+         JOIN users u ON u.id = c.user_id
+         WHERE c.lesson_id = ?
+         ORDER BY c.created_at ASC, c.id ASC"
+    );
+    $stmt->execute([$lessonId]);
+    return $stmt->fetchAll();
+}

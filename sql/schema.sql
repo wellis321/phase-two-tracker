@@ -362,3 +362,17 @@ CREATE TABLE IF NOT EXISTS pm_learning_quiz_attempts (
   CONSTRAINT fk_plqa_question FOREIGN KEY (question_id) REFERENCES pm_learning_quiz_questions(id) ON DELETE CASCADE,
   CONSTRAINT fk_plqa_option FOREIGN KEY (option_id) REFERENCES pm_learning_quiz_options(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Flat, chronological comments on a lesson (not threaded — this team is
+-- small enough that a simple list reads fine). Any signed-in user can post
+-- and can delete their own; admins can delete any.
+CREATE TABLE IF NOT EXISTS pm_learning_comments (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  lesson_id     INT UNSIGNED NOT NULL,
+  user_id       INT UNSIGNED NOT NULL,
+  body          TEXT NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_lesson (lesson_id),
+  CONSTRAINT fk_plc_lesson FOREIGN KEY (lesson_id) REFERENCES pm_learning_lessons(id) ON DELETE CASCADE,
+  CONSTRAINT fk_plc_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

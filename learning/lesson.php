@@ -44,6 +44,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare('DELETE FROM pm_learning_quiz_questions WHERE id = ?')->execute([(int)$_POST['delete_question']]);
         flash('success', 'Question deleted.');
         redirect(APP_URL . '/learning/lesson.php?id=' . $id);
+    } elseif (isset($_POST['add_comment'])) {
+        $body = trim($_POST['body'] ?? '');
+        if ($body !== '') {
+            $db->prepare('INSERT INTO pm_learning_comments (lesson_id, user_id, body) VALUES (?, ?, ?)')
+               ->execute([$id, get_current_user_id(), $body]);
+        }
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id . '#comments');
+    } elseif (isset($_POST['delete_comment'])) {
+        $commentId = (int)$_POST['delete_comment'];
+        if (is_admin()) {
+            $db->prepare('DELETE FROM pm_learning_comments WHERE id = ?')->execute([$commentId]);
+        } else {
+            $db->prepare('DELETE FROM pm_learning_comments WHERE id = ? AND user_id = ?')
+               ->execute([$commentId, get_current_user_id()]);
+        }
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id . '#comments');
     }
 }
 
@@ -75,6 +91,7 @@ $questions = get_quiz_questions_for_lesson($db, $id);
 $questionIds = array_map(fn($q) => (int)$q['id'], $questions);
 $attempts  = get_user_quiz_attempts($db, get_current_user_id(), $questionIds);
 $correctOptions = get_correct_options($db, $questionIds);
+$comments = get_lesson_comments($db, $id);
 
 $pageTitle  = $lesson['title'];
 $activePage = 'learning';
@@ -204,6 +221,39 @@ require __DIR__ . '/../includes/layout/header.php';
   <?php endif; ?>
 </div>
 <?php endif; ?>
+
+<div class="card comments-card" id="comments">
+  <h2 style="margin-top:0;">Discussion</h2>
+  <?php if (!$comments): ?>
+  <p class="empty-note">No comments yet — be the first to share a thought.</p>
+  <?php endif; ?>
+  <?php foreach ($comments as $c): ?>
+  <div class="comment">
+    <div class="comment-meta">
+      <strong><?= e($c['author']) ?></strong>
+      <span class="li-meta"><?= e(date('j M Y, g:ia', strtotime($c['created_at']))) ?></span>
+    </div>
+    <p class="comment-body"><?= nl2br(e($c['body'])) ?></p>
+    <?php if (is_admin() || (int)$c['user_id'] === get_current_user_id()): ?>
+    <form method="POST" action="#comments" onsubmit="return confirm('Delete this comment?');">
+      <?= csrf_field() ?>
+      <input type="hidden" name="delete_comment" value="<?= $c['id'] ?>">
+      <button type="submit" class="btn btn--outline btn--sm">Delete</button>
+    </form>
+    <?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+
+  <form method="POST" action="#comments" style="margin-top:1rem;">
+    <?= csrf_field() ?>
+    <input type="hidden" name="add_comment" value="1">
+    <div class="field">
+      <label for="comment-body">Add a comment</label>
+      <textarea id="comment-body" name="body" rows="3" required placeholder="Share a thought, a question, or something this made you think of..."></textarea>
+    </div>
+    <button type="submit" class="btn btn--primary btn--sm" style="margin-top:.5rem;">Post comment</button>
+  </form>
+</div>
 
 <div class="lesson-nav">
   <div class="lesson-nav-link">
