@@ -306,3 +306,51 @@ CREATE TABLE IF NOT EXISTS pm_learning_glossary (
   updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_term (term)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Understanding checks: a question belongs to exactly one of lesson_id
+-- (a "quick_check" — a couple of short questions at the end of that lesson)
+-- or module_id (a "scenario" — one richer, situational question at the end
+-- of that module, synthesising everything it just covered). Same shape for
+-- both; kind is just which end of the course tree it hangs off.
+CREATE TABLE IF NOT EXISTS pm_learning_quiz_questions (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  lesson_id     INT UNSIGNED NULL,
+  module_id     INT UNSIGNED NULL,
+  kind          ENUM('quick_check','scenario') NOT NULL DEFAULT 'quick_check',
+  prompt        TEXT NOT NULL,
+  sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_lesson (lesson_id),
+  KEY idx_module (module_id),
+  CONSTRAINT fk_plqq_lesson FOREIGN KEY (lesson_id) REFERENCES pm_learning_lessons(id) ON DELETE CASCADE,
+  CONSTRAINT fk_plqq_module FOREIGN KEY (module_id) REFERENCES pm_learning_modules(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pm_learning_quiz_options (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  question_id   INT UNSIGNED NOT NULL,
+  option_text   TEXT NOT NULL,
+  is_correct    TINYINT(1) NOT NULL DEFAULT 0,
+  explanation   TEXT NULL,
+  sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
+  KEY idx_question (question_id),
+  CONSTRAINT fk_plqo_question FOREIGN KEY (question_id) REFERENCES pm_learning_quiz_questions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Append-only, same xAPI-ish shape as pm_learning_progress: every attempt is
+-- kept (not just the latest), so "answered correctly" is derived (EXISTS a
+-- correct attempt) rather than stored as separate mutable state, and admins
+-- can see whether someone got there straight away or after a few tries.
+CREATE TABLE IF NOT EXISTS pm_learning_quiz_attempts (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT UNSIGNED NOT NULL,
+  question_id   INT UNSIGNED NOT NULL,
+  option_id     INT UNSIGNED NOT NULL,
+  is_correct    TINYINT(1) NOT NULL,
+  answered_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_user_question (user_id, question_id),
+  CONSTRAINT fk_plqa_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_plqa_question FOREIGN KEY (question_id) REFERENCES pm_learning_quiz_questions(id) ON DELETE CASCADE,
+  CONSTRAINT fk_plqa_option FOREIGN KEY (option_id) REFERENCES pm_learning_quiz_options(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

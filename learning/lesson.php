@@ -19,6 +19,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['toggle_complete'])) {
         toggle_lesson_progress($db, $id, get_current_user_id());
         redirect(APP_URL . '/learning/lesson.php?id=' . $id);
+    } elseif (isset($_POST['answer_question'])) {
+        $questionId = (int)$_POST['answer_question'];
+        $optionId   = (int)($_POST['option_id'] ?? 0);
+        record_quiz_attempt($db, get_current_user_id(), $questionId, $optionId);
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id . '#quiz-q-' . $questionId);
+    } elseif (isset($_POST['add_question'])) {
+        require_admin();
+        quiz_question_save($db, null, $id, null, $_POST);
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id);
+    } elseif (isset($_POST['update_question'])) {
+        require_admin();
+        quiz_question_save($db, (int)$_POST['update_question'], $id, null, $_POST);
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id);
+    } elseif (isset($_POST['delete_question'])) {
+        require_admin();
+        $db->prepare('DELETE FROM pm_learning_quiz_questions WHERE id = ?')->execute([(int)$_POST['delete_question']]);
+        flash('success', 'Question deleted.');
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id);
     }
 }
 
@@ -45,7 +63,11 @@ if ($totalInCourse > 0) {
     $completedInCourse = (int)$stmt->fetchColumn();
 }
 
-$glossary = get_learning_glossary($db);
+$glossary  = get_learning_glossary($db);
+$questions = get_quiz_questions_for_lesson($db, $id);
+$questionIds = array_map(fn($q) => (int)$q['id'], $questions);
+$attempts  = get_user_quiz_attempts($db, get_current_user_id(), $questionIds);
+$correctOptions = get_correct_options($db, $questionIds);
 
 $pageTitle  = $lesson['title'];
 $activePage = 'learning';
@@ -81,6 +103,84 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="card">
   <div class="lesson-content"><?= render_lesson_content($lesson['content'], $glossary) ?></div>
 </div>
+
+<?php if ($questions || is_admin()): ?>
+<div class="card quiz-card">
+  <h2 style="margin-top:0;">Check your understanding</h2>
+  <?php if (!$questions): ?>
+  <p class="empty-note">No questions yet.</p>
+  <?php endif; ?>
+
+  <?php foreach ($questions as $q):
+      $qid     = (int)$q['id'];
+      $attempt = $attempts[$qid] ?? null;
+      $retry   = isset($_GET['retry']) && (int)$_GET['retry'] === $qid;
+      $showForm = !$attempt || $retry;
+  ?>
+  <div class="quiz-question" id="quiz-q-<?= $qid ?>">
+    <div class="quiz-prompt"><?= render_lesson_content($q['prompt'], $glossary) ?></div>
+
+    <?php if ($showForm): ?>
+    <form method="POST" action="#quiz-q-<?= $qid ?>">
+      <?= csrf_field() ?>
+      <input type="hidden" name="answer_question" value="<?= $qid ?>">
+      <?php foreach ($q['options'] as $opt): ?>
+      <label class="quiz-option-label">
+        <input type="radio" name="option_id" value="<?= $opt['id'] ?>" required>
+        <span><?= render_lesson_inline((string)$opt['option_text']) ?></span>
+      </label>
+      <?php endforeach; ?>
+      <button type="submit" class="btn btn--primary btn--sm" style="margin-top:.5rem;">Check answer</button>
+    </form>
+    <?php else: ?>
+    <p class="quiz-feedback <?= $attempt['is_correct'] ? 'quiz-feedback--correct' : 'quiz-feedback--incorrect' ?>">
+      <strong><?= $attempt['is_correct'] ? 'Correct.' : 'Not quite.' ?></strong>
+      You picked "<?= e($attempt['option_text']) ?>".
+      <?php if ($attempt['explanation']): ?><?= e($attempt['explanation']) ?><?php endif; ?>
+      <?php if (!$attempt['is_correct'] && isset($correctOptions[$qid])): ?>
+        The right answer was "<?= e($correctOptions[$qid]['option_text']) ?>".
+        <?php if ($correctOptions[$qid]['explanation']): ?><?= e($correctOptions[$qid]['explanation']) ?><?php endif; ?>
+      <?php endif; ?>
+    </p>
+    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $id ?>&retry=<?= $qid ?>#quiz-q-<?= $qid ?>">Try again</a>
+    <?php endif; ?>
+
+    <?php if (is_admin()): ?>
+    <div class="quiz-admin-actions">
+      <button type="button" class="icon-btn" data-show-target="quiz-edit-<?= $qid ?>" title="Edit question" aria-label="Edit question"><?= icon_edit() ?></button>
+      <form method="POST" action="" onsubmit="return confirm('Delete this question?');" style="display:inline;">
+        <?= csrf_field() ?>
+        <input type="hidden" name="delete_question" value="<?= $qid ?>">
+        <button type="submit" class="btn btn--outline btn--sm">Delete</button>
+      </form>
+    </div>
+    <form method="POST" action="" id="quiz-edit-<?= $qid ?>" class="editable-form form-grid" hidden style="margin-top:.75rem;">
+      <?= csrf_field() ?>
+      <input type="hidden" name="update_question" value="<?= $qid ?>">
+      <?php quiz_question_form_fields($q); ?>
+      <div class="form-actions form-full" style="margin-top:0; padding-top:0; border-top:none;">
+        <button type="submit" class="btn btn--primary btn--sm">Save question</button>
+        <button type="button" class="btn btn--outline btn--sm" data-hide-self>Cancel</button>
+      </div>
+    </form>
+    <?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+
+  <?php if (is_admin()): ?>
+  <button type="button" class="btn btn--outline btn--sm" data-show-target="quiz-add-form" style="margin-top:.5rem;">+ Add question</button>
+  <form method="POST" action="" id="quiz-add-form" class="editable-form form-grid" hidden style="margin-top:.75rem;">
+    <?= csrf_field() ?>
+    <input type="hidden" name="add_question" value="1">
+    <?php quiz_question_form_fields(null); ?>
+    <div class="form-actions form-full" style="margin-top:0; padding-top:0; border-top:none;">
+      <button type="submit" class="btn btn--primary btn--sm">Add question</button>
+      <button type="button" class="btn btn--outline btn--sm" data-hide-self>Cancel</button>
+    </div>
+  </form>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
 
 <div class="lesson-nav">
   <div class="lesson-nav-link">

@@ -18,7 +18,16 @@ if (!$course) {
     redirect(APP_URL . '/learning/index.php');
 }
 
-$progress = get_course_progress_by_user($db, $id);
+$progress       = get_course_progress_by_user($db, $id);
+$quizStats      = get_quiz_stats_by_user($db, $id);
+$totalQuestions = $db->prepare(
+    'SELECT COUNT(*) FROM pm_learning_quiz_questions q
+     LEFT JOIN pm_learning_lessons l ON l.id = q.lesson_id
+     LEFT JOIN pm_learning_modules ml ON ml.id = COALESCE(q.module_id, l.module_id)
+     WHERE ml.course_id = ?'
+);
+$totalQuestions->execute([$id]);
+$totalQuestions = (int)$totalQuestions->fetchColumn();
 
 $pageTitle  = 'Progress: ' . $course['title'];
 $activePage = 'learning';
@@ -40,6 +49,7 @@ require __DIR__ . '/../includes/layout/header.php';
         <th>Person</th>
         <th>Progress</th>
         <th>Furthest module reached</th>
+        <th>Understanding checks</th>
         <th>Last activity</th>
       </tr>
     </thead>
@@ -56,6 +66,13 @@ require __DIR__ . '/../includes/layout/header.php';
           <?php endif; ?>
         </td>
         <td><?= $p['furthestModule'] ? e($p['furthestModule']) : '—' ?></td>
+        <td>
+          <?php if ($totalQuestions === 0): ?>
+          &mdash;
+          <?php else: $qs = $quizStats[$p['userId']] ?? null; ?>
+          <?= $qs ? $qs['correct'] . ' / ' . $qs['total'] . ' correct' : '<span class="empty-note">Not started</span>' ?>
+          <?php endif; ?>
+        </td>
         <td><?= $p['lastActivity'] ? format_date($p['lastActivity']) : '—' ?></td>
       </tr>
       <?php endforeach; ?>

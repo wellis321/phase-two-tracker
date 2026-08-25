@@ -85,6 +85,14 @@ if (!$course) {
     redirect(APP_URL . '/learning/index.php');
 }
 
+$checkpointModuleIds = $db->prepare(
+    'SELECT DISTINCT q.module_id FROM pm_learning_quiz_questions q
+     JOIN pm_learning_modules m ON m.id = q.module_id
+     WHERE m.course_id = ?'
+);
+$checkpointModuleIds->execute([$id]);
+$checkpointModuleIds = array_map('intval', $checkpointModuleIds->fetchAll(PDO::FETCH_COLUMN));
+
 $pageTitle  = $course['title'];
 $activePage = 'learning';
 require __DIR__ . '/../includes/layout/header.php';
@@ -206,6 +214,14 @@ require __DIR__ . '/../includes/layout/header.php';
   </ul>
   <?php else: ?>
   <p class="empty-note">No lessons in this module yet.</p>
+  <?php endif; ?>
+
+  <?php if (in_array($module['id'], $checkpointModuleIds, true) || is_admin()): ?>
+  <p style="margin-top:.75rem;">
+    <a class="back-link" href="<?= APP_URL ?>/learning/checkpoint.php?module_id=<?= $module['id'] ?>">
+      <?= in_array($module['id'], $checkpointModuleIds, true) ? 'Checkpoint: test your understanding of this module' : 'Checkpoint (add a scenario question)' ?>
+    </a>
+  </p>
   <?php endif; ?>
 
   <?php if (is_admin()): ?>
