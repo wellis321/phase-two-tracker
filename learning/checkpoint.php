@@ -122,15 +122,19 @@ require __DIR__ . '/../includes/layout/header.php';
       <button type="submit" class="btn btn--primary btn--sm" style="margin-top:.5rem;">Check answer</button>
     </form>
     <?php else: ?>
-    <p class="quiz-feedback <?= $attempt['is_correct'] ? 'quiz-feedback--correct' : 'quiz-feedback--incorrect' ?>">
-      <strong><?= $attempt['is_correct'] ? 'Correct.' : 'Not quite.' ?></strong>
-      You picked "<?= e($attempt['option_text']) ?>".
-      <?php if ($attempt['explanation']): ?><?= e($attempt['explanation']) ?><?php endif; ?>
+    <div class="quiz-feedback <?= $attempt['is_correct'] ? 'quiz-feedback--correct' : 'quiz-feedback--incorrect' ?>">
+      <p>
+        <strong><?= $attempt['is_correct'] ? 'Correct.' : 'Not quite.' ?></strong>
+        You picked "<?= e($attempt['option_text']) ?>".
+        <?php if ($attempt['explanation']): ?><?= e($attempt['explanation']) ?><?php endif; ?>
+      </p>
       <?php if (!$attempt['is_correct'] && isset($correctOptions[$qid])): ?>
+      <p>
         The right answer was "<?= e($correctOptions[$qid]['option_text']) ?>".
         <?php if ($correctOptions[$qid]['explanation']): ?><?= e($correctOptions[$qid]['explanation']) ?><?php endif; ?>
+      </p>
       <?php endif; ?>
-    </p>
+    </div>
     <a class="back-link" href="<?= APP_URL ?>/learning/checkpoint.php?module_id=<?= $moduleId ?>&retry=<?= $qid ?>#quiz-q-<?= $qid ?>">Try again</a>
     <?php endif; ?>
 
