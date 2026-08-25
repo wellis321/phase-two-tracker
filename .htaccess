@@ -2,6 +2,8 @@
 
 Options -Indexes
 
+ErrorDocument 404 /404.php
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^sql/        - [F,L]

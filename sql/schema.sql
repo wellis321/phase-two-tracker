@@ -310,14 +310,18 @@ CREATE TABLE IF NOT EXISTS pm_learning_glossary (
 -- Understanding checks: a question belongs to exactly one of lesson_id
 -- (a "quick_check" — a couple of short questions at the end of that lesson)
 -- or module_id (a "scenario" — one richer, situational question at the end
--- of that module, synthesising everything it just covered). Same shape for
--- both; kind is just which end of the course tree it hangs off.
+-- of that module, synthesising everything it just covered). kind is which
+-- end of the course tree it hangs off; format is multiple_choice (uses the
+-- options table below) or reflection (free-text, ungraded — uses
+-- model_answer instead, shown after the learner submits their own answer).
 CREATE TABLE IF NOT EXISTS pm_learning_quiz_questions (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   lesson_id     INT UNSIGNED NULL,
   module_id     INT UNSIGNED NULL,
   kind          ENUM('quick_check','scenario') NOT NULL DEFAULT 'quick_check',
+  format        ENUM('multiple_choice','reflection') NOT NULL DEFAULT 'multiple_choice',
   prompt        TEXT NOT NULL,
+  model_answer  TEXT NULL,
   sort_order    INT UNSIGNED NOT NULL DEFAULT 0,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -342,12 +346,16 @@ CREATE TABLE IF NOT EXISTS pm_learning_quiz_options (
 -- kept (not just the latest), so "answered correctly" is derived (EXISTS a
 -- correct attempt) rather than stored as separate mutable state, and admins
 -- can see whether someone got there straight away or after a few tries.
+-- option_id/is_correct are only set for multiple_choice attempts;
+-- response_text only for reflection attempts (ungraded, so is_correct stays
+-- NULL there).
 CREATE TABLE IF NOT EXISTS pm_learning_quiz_attempts (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id       INT UNSIGNED NOT NULL,
   question_id   INT UNSIGNED NOT NULL,
-  option_id     INT UNSIGNED NOT NULL,
-  is_correct    TINYINT(1) NOT NULL,
+  option_id     INT UNSIGNED NULL,
+  response_text TEXT NULL,
+  is_correct    TINYINT(1) NULL,
   answered_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_user_question (user_id, question_id),
   CONSTRAINT fk_plqa_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

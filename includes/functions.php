@@ -1447,7 +1447,7 @@ function toggle_lesson_progress(PDO $db, int $lessonId, int $userId): bool
 function get_quiz_questions(PDO $db, string $ownerColumn, int $ownerId): array
 {
     $stmt = $db->prepare(
-        "SELECT id, prompt, sort_order FROM pm_learning_quiz_questions
+        "SELECT id, format, prompt, model_answer, sort_order FROM pm_learning_quiz_questions
          WHERE {$ownerColumn} = ? ORDER BY sort_order, id"
     );
     $stmt->execute([$ownerId]);
@@ -1492,10 +1492,10 @@ function get_user_quiz_attempts(PDO $db, int $userId, array $questionIds): array
     $ids = implode(',', array_map('intval', $questionIds));
 
     $latest = $db->prepare(
-        "SELECT a.question_id, a.option_id, a.is_correct, a.answered_at,
+        "SELECT a.question_id, a.option_id, a.is_correct, a.answered_at, a.response_text,
                 o.option_text, o.explanation
          FROM pm_learning_quiz_attempts a
-         JOIN pm_learning_quiz_options o ON o.id = a.option_id
+         LEFT JOIN pm_learning_quiz_options o ON o.id = a.option_id
          WHERE a.user_id = ? AND a.question_id IN ($ids)
          ORDER BY a.answered_at DESC, a.id DESC"
     );
@@ -1534,6 +1534,13 @@ function record_quiz_attempt(PDO $db, int $userId, int $questionId, int $optionI
     return $isCorrect;
 }
 
+/** Records a free-text reflection response. Not graded — there's no is_correct. */
+function record_quiz_reflection(PDO $db, int $userId, int $questionId, string $responseText): void
+{
+    $db->prepare('INSERT INTO pm_learning_quiz_attempts (user_id, question_id, response_text) VALUES (?, ?, ?)')
+       ->execute([$userId, $questionId, $responseText]);
+}
+
 /**
  * Per active user, how many of the course's understanding-check questions
  * (quick_check + scenario combined) they've gotten right at least once, out
@@ -1553,20 +1560,23 @@ function get_quiz_stats_by_user(PDO $db, int $courseId): array
     $total = count($questionIds);
     if ($total === 0) return [];
 
+    // "Done" means: a multiple-choice question answered correctly at least
+    // once, or a reflection question with at least one response recorded —
+    // there's nothing to grade on a reflection, only whether it was engaged with.
     $ids = implode(',', array_map('intval', $questionIds));
     $rows = $db->query(
         "SELECT DISTINCT user_id, question_id FROM pm_learning_quiz_attempts
-         WHERE question_id IN ($ids) AND is_correct = 1"
+         WHERE question_id IN ($ids) AND (is_correct = 1 OR response_text IS NOT NULL)"
     )->fetchAll();
 
-    $correctByUser = [];
+    $doneByUser = [];
     foreach ($rows as $r) {
-        $correctByUser[(int)$r['user_id']][(int)$r['question_id']] = true;
+        $doneByUser[(int)$r['user_id']][(int)$r['question_id']] = true;
     }
 
     $out = [];
-    foreach ($correctByUser as $userId => $correctQuestions) {
-        $out[$userId] = ['correct' => count($correctQuestions), 'total' => $total];
+    foreach ($doneByUser as $userId => $doneQuestions) {
+        $out[$userId] = ['correct' => count($doneQuestions), 'total' => $total];
     }
     return $out;
 }
@@ -1588,14 +1598,17 @@ function get_correct_options(PDO $db, array $questionIds): array
 }
 
 /**
- * Fixed at 4 option slots — simple to author, plenty for a multiple-choice
- * question. Echoes the shared add/edit form fields (prompt + 4 options,
- * each with text, a single "this one's correct" radio, and an optional
- * explanation), pre-filled from $question when editing, blank when adding.
+ * Two formats share one form: multiple_choice uses the 4 option slots and
+ * ignores model_answer; reflection uses model_answer and ignores the
+ * options. Both sets of fields are always shown (no JS toggle) — simpler to
+ * maintain, and quiz_question_save() validates only the fields that matter
+ * for whichever format was actually selected.
  */
 function quiz_question_form_fields(?array $question): void
 {
-    $prompt = $question['prompt'] ?? '';
+    $prompt      = $question['prompt'] ?? '';
+    $format      = $question['format'] ?? 'multiple_choice';
+    $modelAnswer = $question['model_answer'] ?? '';
     $slots  = [];
     for ($i = 0; $i < 4; $i++) {
         $opt = $question['options'][$i] ?? null;
@@ -1610,16 +1623,30 @@ function quiz_question_form_fields(?array $question): void
       <label>Question</label>
       <textarea name="prompt" rows="2" required><?= e($prompt) ?></textarea>
     </div>
+    <div class="field form-full">
+      <label>Format</label>
+      <label style="display:inline-flex; align-items:center; gap:.35rem; margin-right:1rem; font-weight:400; text-transform:none;">
+        <input type="radio" name="format" value="multiple_choice" <?= $format === 'multiple_choice' ? 'checked' : '' ?>> Multiple choice
+      </label>
+      <label style="display:inline-flex; align-items:center; gap:.35rem; font-weight:400; text-transform:none;">
+        <input type="radio" name="format" value="reflection" <?= $format === 'reflection' ? 'checked' : '' ?>> Reflection prompt
+      </label>
+    </div>
+    <p class="li-meta form-full" style="margin:-.3rem 0 0;">For multiple choice, fill in the options below. For a reflection prompt, fill in the model answer instead and leave the options blank.</p>
     <?php foreach ($slots as $i => $slot): ?>
     <div class="field form-full quiz-option-field">
       <label>
-        <input type="radio" name="correct_option" value="<?= $i ?>" <?= $slot['is_correct'] ? 'checked' : '' ?> required>
-        Option <?= $i + 1 ?><?= $i >= 2 ? ' (optional)' : '' ?> — correct answer
+        <input type="radio" name="correct_option" value="<?= $i ?>" <?= $slot['is_correct'] ? 'checked' : '' ?>>
+        Option <?= $i + 1 ?> — correct answer
       </label>
-      <input type="text" name="option_text[]" value="<?= e($slot['text']) ?>" placeholder="Option text" <?= $i < 2 ? 'required' : '' ?>>
+      <input type="text" name="option_text[]" value="<?= e($slot['text']) ?>" placeholder="Option text">
       <input type="text" name="explanation[]" value="<?= e((string)$slot['explanation']) ?>" placeholder="Explanation shown after answering (optional)">
     </div>
     <?php endforeach; ?>
+    <div class="field form-full">
+      <label>Model answer <span style="color:var(--muted); font-weight:400; text-transform:none;">(reflection prompts only — shown after they submit their own answer)</span></label>
+      <textarea name="model_answer" rows="3"><?= e((string)$modelAnswer) ?></textarea>
+    </div>
     <?php
 }
 
@@ -1632,14 +1659,25 @@ function quiz_question_form_fields(?array $question): void
  */
 function quiz_question_save(PDO $db, ?int $questionId, ?int $lessonId, ?int $moduleId, array $post): void
 {
-    $prompt       = trim($post['prompt'] ?? '');
+    $prompt      = trim($post['prompt'] ?? '');
+    $format      = ($post['format'] ?? 'multiple_choice') === 'reflection' ? 'reflection' : 'multiple_choice';
+    $modelAnswer = trim($post['model_answer'] ?? '') ?: null;
+
     $optionTexts  = $post['option_text'] ?? [];
     $explanations = $post['explanation'] ?? [];
     $correctIndex = (int)($post['correct_option'] ?? -1);
+    $filledCount  = count(array_filter($optionTexts, fn($t) => trim((string)$t) !== ''));
 
-    $filledCount = count(array_filter($optionTexts, fn($t) => trim((string)$t) !== ''));
-    if ($prompt === '' || $filledCount < 2 || $correctIndex < 0 || $correctIndex >= count($optionTexts) || trim((string)($optionTexts[$correctIndex] ?? '')) === '') {
-        flash('error', 'A question needs a prompt, at least two options, and one of the filled-in options marked correct.');
+    if ($prompt === '') {
+        flash('error', 'A question needs a prompt.');
+        return;
+    }
+    if ($format === 'multiple_choice' && ($filledCount < 2 || $correctIndex < 0 || $correctIndex >= count($optionTexts) || trim((string)($optionTexts[$correctIndex] ?? '')) === '')) {
+        flash('error', 'A multiple-choice question needs at least two options, and one of the filled-in options marked correct.');
+        return;
+    }
+    if ($format === 'reflection' && $modelAnswer === null) {
+        flash('error', 'A reflection prompt needs a model answer.');
         return;
     }
 
@@ -1650,15 +1688,26 @@ function quiz_question_save(PDO $db, ?int $questionId, ?int $lessonId, ?int $mod
         $next = (int)$db->query(
             "SELECT COALESCE(MAX(sort_order),-1)+1 FROM pm_learning_quiz_questions WHERE {$ownerColumn} = {$ownerId}"
         )->fetchColumn();
-        $db->prepare("INSERT INTO pm_learning_quiz_questions ({$ownerColumn}, kind, prompt, sort_order) VALUES (?, ?, ?, ?)")
-           ->execute([$ownerId, $kind, $prompt, $next]);
+        $db->prepare("INSERT INTO pm_learning_quiz_questions ({$ownerColumn}, kind, format, prompt, model_answer, sort_order) VALUES (?, ?, ?, ?, ?, ?)")
+           ->execute([$ownerId, $kind, $format, $prompt, $modelAnswer, $next]);
         $questionId = (int)$db->lastInsertId();
         $existingOptions = [];
     } else {
-        $db->prepare('UPDATE pm_learning_quiz_questions SET prompt = ? WHERE id = ?')->execute([$prompt, $questionId]);
+        $db->prepare('UPDATE pm_learning_quiz_questions SET format = ?, prompt = ?, model_answer = ? WHERE id = ?')
+           ->execute([$format, $prompt, $modelAnswer, $questionId]);
         $stmt = $db->prepare('SELECT id FROM pm_learning_quiz_options WHERE question_id = ? ORDER BY sort_order, id');
         $stmt->execute([$questionId]);
         $existingOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    if ($format === 'reflection') {
+        // Not a multiple-choice question — drop any leftover options from a
+        // format switch so the form doesn't show stale, ignored answers.
+        if ($existingOptions) {
+            $db->prepare('DELETE FROM pm_learning_quiz_options WHERE question_id = ?')->execute([$questionId]);
+        }
+        flash('success', 'Question saved.');
+        return;
     }
 
     $insert = $db->prepare('INSERT INTO pm_learning_quiz_options (question_id, option_text, is_correct, explanation, sort_order) VALUES (?, ?, ?, ?, ?)');

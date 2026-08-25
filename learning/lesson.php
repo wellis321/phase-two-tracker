@@ -24,6 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $optionId   = (int)($_POST['option_id'] ?? 0);
         record_quiz_attempt($db, get_current_user_id(), $questionId, $optionId);
         redirect(APP_URL . '/learning/lesson.php?id=' . $id . '#quiz-q-' . $questionId);
+    } elseif (isset($_POST['submit_reflection'])) {
+        $questionId = (int)$_POST['submit_reflection'];
+        $response   = trim($_POST['response_text'] ?? '');
+        if ($response !== '') {
+            record_quiz_reflection($db, get_current_user_id(), $questionId, $response);
+        }
+        redirect(APP_URL . '/learning/lesson.php?id=' . $id . '#quiz-q-' . $questionId);
     } elseif (isset($_POST['add_question'])) {
         require_admin();
         quiz_question_save($db, null, $id, null, $_POST);
@@ -120,7 +127,21 @@ require __DIR__ . '/../includes/layout/header.php';
   <div class="quiz-question" id="quiz-q-<?= $qid ?>">
     <div class="quiz-prompt"><?= render_lesson_content($q['prompt'], $glossary) ?></div>
 
-    <?php if ($showForm): ?>
+    <?php if ($q['format'] === 'reflection'): ?>
+    <form method="POST" action="#quiz-q-<?= $qid ?>">
+      <?= csrf_field() ?>
+      <input type="hidden" name="submit_reflection" value="<?= $qid ?>">
+      <textarea name="response_text" rows="4" placeholder="Write your own answer first..." style="width:100%;"><?= e((string)($attempt['response_text'] ?? '')) ?></textarea>
+      <button type="submit" class="btn btn--primary btn--sm" style="margin-top:.5rem;"><?= $attempt ? 'Update my answer' : 'Submit' ?></button>
+    </form>
+    <?php if ($attempt): ?>
+    <div class="quiz-feedback" style="margin-top:.75rem;">
+      <strong>One way to think about it:</strong>
+      <?= render_lesson_content((string)$q['model_answer'], $glossary) ?>
+    </div>
+    <?php endif; ?>
+
+    <?php elseif ($showForm): ?>
     <form method="POST" action="#quiz-q-<?= $qid ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="answer_question" value="<?= $qid ?>">

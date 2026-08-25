@@ -70,7 +70,7 @@ require __DIR__ . '/../includes/layout/header.php';
           <?php if ($totalQuestions === 0): ?>
           &mdash;
           <?php else: $qs = $quizStats[$p['userId']] ?? null; ?>
-          <?= $qs ? $qs['correct'] . ' / ' . $qs['total'] . ' correct' : '<span class="empty-note">Not started</span>' ?>
+          <?= $qs ? $qs['correct'] . ' / ' . $qs['total'] . ' complete' : '<span class="empty-note">Not started</span>' ?>
           <?php endif; ?>
         </td>
         <td><?= $p['lastActivity'] ? format_date($p['lastActivity']) : '—' ?></td>
