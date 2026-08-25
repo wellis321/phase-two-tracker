@@ -1017,7 +1017,10 @@ function render_lesson_content(string $raw): string
     };
     $flushQuote = function () use (&$quote, &$out) {
         if ($quote) {
-            $out .= '<blockquote><p>' . render_lesson_inline(implode(' ', $quote)) . '</p></blockquote>';
+            // Each source line stays its own line (joined with <br>, not folded into
+            // one sentence) — quotes are often a short list, like the Manifesto's four
+            // value statements, where the line breaks are part of the meaning.
+            $out .= '<blockquote><p>' . implode('<br>', array_map('render_lesson_inline', $quote)) . '</p></blockquote>';
             $quote = [];
         }
     };
