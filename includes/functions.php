@@ -1055,7 +1055,10 @@ function apply_glossary_terms(string $html, array $glossary): string
     $definitionsByGroup = [];
     foreach ($terms as $i => $term) {
         $group = 'g' . $i;
-        $alternatives[] = '(?<' . $group . '>' . glossary_term_variants_pattern($term) . ')';
+        // $html is already HTML-escaped by this point, so match against the
+        // escaped form of the term (e.g. an apostrophe as &#039;) or it won't
+        // line up with what's actually in the text.
+        $alternatives[] = '(?<' . $group . '>' . glossary_term_variants_pattern(e($term)) . ')';
         $definitionsByGroup[$group] = $glossary[$term];
     }
     $pattern = '/\b(?:' . implode('|', $alternatives) . ')\b/i';
