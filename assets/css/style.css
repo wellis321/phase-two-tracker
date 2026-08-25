@@ -610,7 +610,7 @@ tbody tr:hover td { background: #f8fbf9; }
 
 .lesson-content { font-size: .98rem; line-height: 1.7; }
 .lesson-content::after { content: ""; display: table; clear: both; }
-.lesson-content h3 { margin: 1.6rem 0 .5rem; font-size: 1.08rem; clear: both; }
+.lesson-content h3 { margin: 1.6rem 0 .5rem; font-size: 1.08rem; }
 .lesson-content h3:first-child { margin-top: 0; }
 .lesson-content p { margin: 0 0 1rem; }
 .lesson-content ul { margin: 0 0 1rem; padding-left: 1.4rem; }
