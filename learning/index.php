@@ -48,6 +48,9 @@ require __DIR__ . '/../includes/layout/header.php';
     <h1>Shared Learning</h1>
     <p>Courses the team can work through at their own pace — a shared library, not a fixed curriculum.</p>
   </div>
+  <div class="page-header-actions">
+    <a href="<?= APP_URL ?>/learning/glossary.php" class="btn btn--outline">Glossary</a>
+  </div>
 </div>
 
 <?php foreach ($errors as $err): ?><div class="flash flash-error"><?= e($err) ?></div><?php endforeach; ?>

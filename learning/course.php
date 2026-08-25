@@ -100,6 +100,7 @@ require __DIR__ . '/../includes/layout/header.php';
       <?php if ($course['description']): ?><p><?= e($course['description']) ?></p><?php endif; ?>
     </div>
     <div class="page-header-actions">
+      <a href="<?= APP_URL ?>/learning/progress.php?id=<?= $course['id'] ?>" class="btn btn--outline">View progress</a>
       <button type="button" class="btn btn--outline" data-edit-toggle>Edit course</button>
     </div>
   </div>
@@ -243,6 +244,9 @@ require __DIR__ . '/../includes/layout/header.php';
 </div>
 <?php endif; ?>
 
-<p class="back-nav"><a class="back-link" href="<?= APP_URL ?>/learning/index.php"><?= icon_arrow_left() ?> Back to Shared Learning</a></p>
+<p class="back-nav">
+  <a class="back-link" href="<?= APP_URL ?>/learning/index.php"><?= icon_arrow_left() ?> Back to Shared Learning</a>
+  <a class="back-link" href="<?= APP_URL ?>/learning/glossary.php" style="margin-left:1.5rem;">Glossary</a>
+</p>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>

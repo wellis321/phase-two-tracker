@@ -95,3 +95,13 @@ document.addEventListener('keydown', function (e) {
     g.querySelector('[data-nav-toggle]').setAttribute('aria-expanded', 'false');
   });
 });
+
+// Glossary term tooltips: hover/focus already show them via CSS; this adds
+// tap-to-open for touch devices, which have no hover state.
+document.addEventListener('click', function (e) {
+  var term = e.target.closest('.glossary-term');
+  document.querySelectorAll('.glossary-term--open').forEach(function (t) {
+    if (t !== term) t.classList.remove('glossary-term--open');
+  });
+  if (term) term.classList.toggle('glossary-term--open');
+});

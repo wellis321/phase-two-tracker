@@ -993,9 +993,99 @@ function render_lesson_image(string $line): ?string
  * "- " lines group into a bullet list, "> " lines group into a quote,
  * "![caption](https://url)" on its own line becomes a floated portrait
  * (Wikimedia Commons only), and "[label](https://url)" anywhere becomes a
- * link. Everything else is escaped — this is not a raw-HTML field.
+ * link. Everything else is escaped — this is not a raw-HTML field. Pass the
+ * shared glossary (get_learning_glossary()) to also make the first mention
+ * of each term in the lesson hoverable/tappable with its definition.
  */
-function render_lesson_content(string $raw): string
+/** @return array<string,string> term => definition, from the shared glossary. */
+function get_learning_glossary(PDO $db): array
+{
+    $rows = $db->query('SELECT term, definition FROM pm_learning_glossary ORDER BY term')->fetchAll();
+    $out = [];
+    foreach ($rows as $r) {
+        $out[$r['term']] = $r['definition'];
+    }
+    return $out;
+}
+
+/**
+ * Wraps the first occurrence of each glossary term in rendered lesson HTML
+ * with a hoverable/tappable definition, without ever touching text inside
+ * an HTML tag (so a term appearing in an href, or as part of markup,
+ * can't get corrupted). Only the first match per term in the whole
+ * document gets wrapped — later repeats stay plain so the page doesn't
+ * fill up with tooltips on every mention of a common word.
+ */
+/**
+ * Builds a regex fragment for one glossary term that also matches simple
+ * English plurals ("backlog" -> "backlogs", "ceremony" -> "ceremonies")
+ * and treats a hyphen in the term as optional ("stand-up" also matches
+ * "standup"), without a full grammar engine — good enough for how these
+ * terms actually get written across lessons.
+ */
+function glossary_term_variants_pattern(string $term): string
+{
+    if (preg_match('/[^aeiou]y$/i', $term)) {
+        return preg_quote(substr($term, 0, -1), '/') . '(?:y|ies)';
+    }
+    $withOptionalHyphens = implode('', array_map(
+        fn($p) => $p === '-' ? '-?' : preg_quote($p, '/'),
+        preg_split('/(-)/', $term, -1, PREG_SPLIT_DELIM_CAPTURE)
+    ));
+    return $withOptionalHyphens . '(?:es|s)?';
+}
+
+/**
+ * Wraps the first occurrence of each glossary term in rendered lesson HTML
+ * with a hoverable/tappable definition. Runs as a single pass over the
+ * original text — deliberately not one pass per term — because a second
+ * pass could re-match a glossary word that appears inside a definition
+ * this function itself just inserted (several definitions here reference
+ * other glossary terms), which would nest a glossary span inside another
+ * one's tooltip. One pass, on the untouched text, can't do that.
+ */
+function apply_glossary_terms(string $html, array $glossary): string
+{
+    if (!$glossary) return $html;
+
+    $terms = array_keys($glossary);
+    usort($terms, fn($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+
+    $alternatives = [];
+    $definitionsByGroup = [];
+    foreach ($terms as $i => $term) {
+        $group = 'g' . $i;
+        $alternatives[] = '(?<' . $group . '>' . glossary_term_variants_pattern($term) . ')';
+        $definitionsByGroup[$group] = $glossary[$term];
+    }
+    $pattern = '/\b(?:' . implode('|', $alternatives) . ')\b/i';
+
+    $used = [];
+    $wrapText = function (string $text) use ($pattern, $definitionsByGroup, &$used): string {
+        return preg_replace_callback($pattern, function ($m) use ($definitionsByGroup, &$used) {
+            foreach ($definitionsByGroup as $group => $definition) {
+                if (($m[$group] ?? '') !== '') {
+                    if (isset($used[$group])) return $m[0];
+                    $used[$group] = true;
+                    return '<span class="glossary-term" tabindex="0">' . $m[0]
+                         . '<span class="glossary-tooltip" role="tooltip">' . e($definition) . '</span></span>';
+                }
+            }
+            return $m[0];
+        }, $text);
+    };
+
+    // Split into alternating [text, tag, text, tag, ...] and only touch the
+    // text segments, so matching never crosses into actual markup.
+    $parts = preg_split('/(<[^>]+>)/', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+    foreach ($parts as $i => $part) {
+        if ($i % 2 === 1) continue;
+        $parts[$i] = $wrapText($part);
+    }
+    return implode('', $parts);
+}
+
+function render_lesson_content(string $raw, array $glossary = []): string
 {
     $lines = explode("\n", str_replace("\r\n", "\n", trim($raw)));
     $out = '';
@@ -1059,7 +1149,8 @@ function render_lesson_content(string $raw): string
     }
     $flushParagraph(); $flushList(); $flushQuote();
 
-    return $out ?: '<p class="empty-note">No content yet.</p>';
+    if ($out === '') return '<p class="empty-note">No content yet.</p>';
+    return $glossary ? apply_glossary_terms($out, $glossary) : $out;
 }
 
 /** @return array<int, array{id:int,title:string,description:?string,moduleCount:int,lessonCount:int,completedCount:int}> */
@@ -1251,6 +1342,83 @@ function get_lesson_sequence(PDO $db, int $courseId): array
     );
     $stmt->execute([$courseId]);
     return $stmt->fetchAll();
+}
+
+/**
+ * Per-user progress through a course, for the admin progress view: how many
+ * lessons each active user has completed, the furthest module they've
+ * reached (by lesson order, not just count — so two people with the same
+ * count but working through different lessons still show correctly), and
+ * when they were last active in the course. Includes users with zero
+ * progress, so "hasn't started yet" is visible too, not just silently
+ * absent.
+ * @return array<int, array{userId:int, name:string, completedCount:int, totalLessons:int, furthestModule:?string, lastActivity:?string}>
+ */
+function get_course_progress_by_user(PDO $db, int $courseId): array
+{
+    $stmt = $db->prepare(
+        'SELECT l.id, m.title AS module_title
+         FROM pm_learning_lessons l
+         JOIN pm_learning_modules m ON m.id = l.module_id
+         WHERE m.course_id = ?
+         ORDER BY m.sort_order, m.id, l.sort_order, l.id'
+    );
+    $stmt->execute([$courseId]);
+    $sequence = $stmt->fetchAll();
+    if (!$sequence) return [];
+
+    $positionByLessonId = [];
+    $moduleByLessonId   = [];
+    foreach ($sequence as $i => $row) {
+        $positionByLessonId[(int)$row['id']] = $i;
+        $moduleByLessonId[(int)$row['id']]   = $row['module_title'];
+    }
+    $totalLessons = count($sequence);
+    $lessonIds    = implode(',', array_keys($positionByLessonId));
+
+    $users = $db->query(
+        "SELECT id, username, display_name FROM users WHERE is_active = 1 ORDER BY COALESCE(display_name, username)"
+    )->fetchAll();
+
+    $progressRows = $db->query(
+        "SELECT user_id, lesson_id, completed_at FROM pm_learning_progress WHERE lesson_id IN ($lessonIds)"
+    )->fetchAll();
+    $byUser = [];
+    foreach ($progressRows as $row) {
+        $byUser[(int)$row['user_id']][] = $row;
+    }
+
+    $out = [];
+    foreach ($users as $u) {
+        $uid  = (int)$u['id'];
+        $rows = $byUser[$uid] ?? [];
+
+        $furthestPosition = -1;
+        $furthestModule   = null;
+        $lastActivity     = null;
+        foreach ($rows as $r) {
+            $pos = $positionByLessonId[(int)$r['lesson_id']] ?? -1;
+            if ($pos > $furthestPosition) {
+                $furthestPosition = $pos;
+                $furthestModule   = $moduleByLessonId[(int)$r['lesson_id']];
+            }
+            if ($lastActivity === null || $r['completed_at'] > $lastActivity) {
+                $lastActivity = $r['completed_at'];
+            }
+        }
+
+        $out[] = [
+            'userId'         => $uid,
+            'name'           => $u['display_name'] ?: $u['username'],
+            'completedCount' => count($rows),
+            'totalLessons'   => $totalLessons,
+            'furthestModule' => $furthestModule,
+            'lastActivity'   => $lastActivity,
+        ];
+    }
+
+    usort($out, fn($a, $b) => $b['completedCount'] <=> $a['completedCount']);
+    return $out;
 }
 
 /** Toggles completion for one user/lesson pair. Returns the new completed state. */

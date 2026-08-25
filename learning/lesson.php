@@ -45,12 +45,17 @@ if ($totalInCourse > 0) {
     $completedInCourse = (int)$stmt->fetchColumn();
 }
 
+$glossary = get_learning_glossary($db);
+
 $pageTitle  = $lesson['title'];
 $activePage = 'learning';
 require __DIR__ . '/../includes/layout/header.php';
 ?>
 
-<p class="back-nav" style="margin-top:0;"><a class="back-link" href="<?= APP_URL ?>/learning/course.php?id=<?= $lesson['courseId'] ?>"><?= icon_arrow_left() ?> <?= e($lesson['courseTitle']) ?></a></p>
+<p class="back-nav" style="margin-top:0;">
+  <a class="back-link" href="<?= APP_URL ?>/learning/course.php?id=<?= $lesson['courseId'] ?>"><?= icon_arrow_left() ?> <?= e($lesson['courseTitle']) ?></a>
+  <a class="back-link" href="<?= APP_URL ?>/learning/glossary.php" style="margin-left:1.5rem;">Glossary</a>
+</p>
 
 <div class="page-header">
   <div>
@@ -74,7 +79,7 @@ require __DIR__ . '/../includes/layout/header.php';
 </div>
 
 <div class="card">
-  <div class="lesson-content"><?= render_lesson_content($lesson['content']) ?></div>
+  <div class="lesson-content"><?= render_lesson_content($lesson['content'], $glossary) ?></div>
 </div>
 
 <div class="lesson-nav">

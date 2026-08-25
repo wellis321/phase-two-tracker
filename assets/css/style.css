@@ -666,6 +666,47 @@ tbody tr:hover td { background: #f8fbf9; }
 .lineage-title { margin-top: .1rem; font-size: .74rem; color: var(--muted); text-align: center; line-height: 1.25; }
 .lineage-node:hover .lineage-title { color: var(--text); }
 
+.glossary-term {
+  border-bottom: 1px dotted var(--green-dark);
+  color: var(--green-dark);
+  cursor: help;
+  position: relative;
+}
+.glossary-term:hover, .glossary-term:focus, .glossary-term--open { outline: none; background: var(--green-light); }
+.glossary-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + .4rem);
+  width: max-content;
+  max-width: 260px;
+  background: var(--text);
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: .55rem .7rem;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .12s;
+  pointer-events: none;
+}
+.glossary-term:hover .glossary-tooltip,
+.glossary-term:focus .glossary-tooltip,
+.glossary-term--open .glossary-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.glossary-list { display: flex; flex-direction: column; gap: 1rem; }
+.glossary-entry { padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.glossary-entry:last-child { border-bottom: none; padding-bottom: 0; }
+.glossary-entry-view { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.glossary-entry dt { font-weight: 700; font-size: .95rem; }
+.glossary-entry dd { margin: .25rem 0 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.glossary-entry-actions { display: flex; gap: .5rem; align-items: center; flex-shrink: 0; }
+
 .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
 .lesson-nav-link { flex: 1; }
 .lesson-nav-link--next { text-align: right; }

@@ -291,3 +291,18 @@ CREATE TABLE IF NOT EXISTS pm_learning_progress (
   CONSTRAINT fk_pm_learning_progress_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_pm_learning_progress_lesson FOREIGN KEY (lesson_id) REFERENCES pm_learning_lessons(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Shared across every course (not course-scoped) since jargon like "sprint"
+-- or "backlog" means the same thing regardless of which course mentions it.
+-- The first mention of a matching term in any lesson's rendered content gets
+-- wrapped in a hoverable/tappable definition automatically — see
+-- render_lesson_content() — so authoring a lesson never has to reference
+-- the glossary explicitly.
+CREATE TABLE IF NOT EXISTS pm_learning_glossary (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  term          VARCHAR(100) NOT NULL,
+  definition    TEXT NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_term (term)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
