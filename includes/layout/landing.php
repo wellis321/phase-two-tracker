@@ -28,12 +28,12 @@
 
 <section class="landing-hero">
   <div class="landing-hero-inner">
-    <p class="landing-eyebrow">ROCC Repairs System &middot; Phase 2</p>
+    <p class="landing-eyebrow">Repairs System Delivery &middot; Phase 2</p>
     <h1 class="landing-h1">One place to see how Phase 2 is actually going</h1>
     <p class="landing-lead">
       A weekly-refreshable view of the repairs housing system delivery — status, focus, progress,
       tasks, risks, decisions, supplier activity and milestones — for the team moving from discovery
-      into build with ROCC.
+      into build with the delivery supplier.
     </p>
     <div class="landing-hero-actions">
       <a href="<?= APP_URL ?>/login.php" class="btn btn--primary btn--lg">Sign in</a>
@@ -71,7 +71,7 @@
       </article>
       <article class="landing-feature-card">
         <h3>Supplier activity</h3>
-        <p>What's in motion with ROCC — workshops, deliverables, sign-offs.</p>
+        <p>What's in motion with the delivery supplier — workshops, deliverables, sign-offs.</p>
       </article>
       <article class="landing-feature-card">
         <h3>Milestones &amp; lookahead</h3>
@@ -96,7 +96,7 @@
     <span class="footer-env footer-env--<?= e(APP_ENV) ?>"><?= e(strtoupper(APP_ENV)) ?></span>
     <div class="footer-tools">
       <?php if (SOR_SYSTEM_URL !== ''): ?><a href="<?= e(SOR_SYSTEM_URL) ?>/">SOR System</a><?php endif; ?>
-      <a href="<?= e(ERC_SITE_URL) ?>/">ERC Portal</a>
+      <a href="<?= e(ERC_SITE_URL) ?>/">Council Portal</a>
       <a href="<?= e(ASIS_SITE_URL) ?>/">AS-IS Mapping</a>
       <a href="<?= e(METRICS_SITE_URL) ?>/">Housing Metrics</a>
     </div>

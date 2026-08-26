@@ -9,7 +9,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_admin();
 $db = db();
 
-$f = ['supplier' => 'ROCC', 'title' => '', 'description' => '', 'status' => 'planned', 'due_date' => '', 'owner_user_id' => ''];
+$f = ['supplier' => 'Meridian', 'title' => '', 'description' => '', 'status' => 'planned', 'due_date' => '', 'owner_user_id' => ''];
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Invalid form token, please try again.';
         goto render;
     }
-    $f['supplier']      = trim($_POST['supplier'] ?? '') ?: 'ROCC';
+    $f['supplier']      = trim($_POST['supplier'] ?? '') ?: 'Meridian';
     $f['title']         = trim($_POST['title'] ?? '');
     $f['description']   = trim($_POST['description'] ?? '');
     $f['status']        = $_POST['status'] ?? 'planned';

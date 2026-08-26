@@ -389,7 +389,7 @@ function render_task_dependency_chips(array $dependencyTasks): string
     return $out;
 }
 
-/** Initials for a person's display name (falls back to username), e.g. "William Ellis" -> "WE". */
+/** Initials for a person's display name (falls back to username), e.g. "Jane Doe" -> "JD". */
 function user_initials(?string $displayName, ?string $username): string
 {
     $source = trim((string)($displayName ?: $username));

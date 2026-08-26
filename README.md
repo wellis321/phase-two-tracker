@@ -1,7 +1,7 @@
 # Phase 2 Delivery Tracker
 
 A lightweight project-management tool for Phase 2 of the repairs housing
-system delivery (ROCC build, replacing Servitor). Gives the team an at-a-
+system delivery, moving to a new delivery supplier. Gives the team an at-a-
 glance weekly view: overall status, current focus, progress, tasks, risks
 & issues, decisions required, supplier activity, milestones, a 60–90 day
 lookahead, and a browsable weekly archive.

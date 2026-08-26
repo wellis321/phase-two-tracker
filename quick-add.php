@@ -100,7 +100,7 @@ switch ($type) {
             $db->prepare(
                 'INSERT INTO pm_supplier_activities (supplier, title, status, due_date, created_by) VALUES (?, ?, ?, ?, ?)'
             )->execute([
-                trim($_POST['supplier'] ?? '') ?: 'ROCC', $title, 'planned', $_POST['due_date'] ?: null, get_current_user_id(),
+                trim($_POST['supplier'] ?? '') ?: 'Meridian', $title, 'planned', $_POST['due_date'] ?: null, get_current_user_id(),
             ]);
         }
         break;

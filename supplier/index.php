@@ -36,7 +36,7 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="page-header">
   <div>
     <h1>Supplier activity</h1>
-    <p>Work items with the ROCC (or other) supplier — workshops, deliverables, sign-offs.</p>
+    <p>Work items with the delivery supplier — workshops, deliverables, sign-offs.</p>
   </div>
   <?php if (is_admin()): ?>
   <div class="page-header-actions">

@@ -56,7 +56,7 @@
       <div class="field"><label for="qa-dec-needed">Needed by</label><input type="date" id="qa-dec-needed" name="needed_by_date"></div>
     </div>
     <div class="qa-fields form-grid" data-for="supplier" hidden>
-      <div class="field"><label for="qa-sup-supplier">Supplier</label><input type="text" id="qa-sup-supplier" name="supplier" value="ROCC"></div>
+      <div class="field"><label for="qa-sup-supplier">Supplier</label><input type="text" id="qa-sup-supplier" name="supplier" value="Meridian"></div>
       <div class="field"><label for="qa-sup-due">Due date</label><input type="date" id="qa-sup-due" name="due_date"></div>
     </div>
 
@@ -73,7 +73,7 @@
     <span class="footer-env footer-env--<?= e(APP_ENV) ?>"><?= e(app_env_label()) ?></span>
     <div class="footer-tools">
       <?php if (SOR_SYSTEM_URL !== ''): ?><a href="<?= e(SOR_SYSTEM_URL) ?>/">SOR System</a><?php endif; ?>
-      <a href="<?= e(ERC_SITE_URL) ?>/">ERC Portal</a>
+      <a href="<?= e(ERC_SITE_URL) ?>/">Council Portal</a>
       <a href="<?= e(ASIS_SITE_URL) ?>/">AS-IS Mapping</a>
       <a href="<?= e(METRICS_SITE_URL) ?>/">Housing Metrics</a>
     </div>

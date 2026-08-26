@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS pm_decisions (
 
 CREATE TABLE IF NOT EXISTS pm_supplier_activities (
   id            INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
-  supplier      VARCHAR(100)  NOT NULL DEFAULT 'ROCC',
+  supplier      VARCHAR(100)  NOT NULL DEFAULT 'Meridian',
   title         VARCHAR(255)  NOT NULL,
   description   TEXT,
   status        ENUM('planned','in_progress','complete','blocked') NOT NULL DEFAULT 'planned',
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS pm_agenda_attendees (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- User-defined tags, freely nestable (parent_id NULL = top-level, e.g. a
--- "System" tag with "ROCC"/"NECH"/"APEX" nested underneath it). Uniqueness
+-- "System" tag with "Meridian"/"Keystone"/"Compass" nested underneath it). Uniqueness
 -- of a tag's name among its siblings is enforced in application code (see
 -- tag_name_taken() in includes/functions.php) rather than a DB constraint,
 -- since MySQL unique indexes don't treat NULL parent_id values as equal.
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS pm_tags (
   CONSTRAINT fk_pm_tags_parent FOREIGN KEY (parent_id) REFERENCES pm_tags(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Free-form custom fields on a tag (e.g. "Address" -> "2 Spiersbridge Way").
+-- Free-form custom fields on a tag (e.g. "Address" -> "12 Example Street").
 -- Fields can themselves nest under a parent field (parent_field_id), so a
 -- composite value like Address can be broken into Street/City/Postcode as
 -- their own queryable rows instead of one flattened blob.

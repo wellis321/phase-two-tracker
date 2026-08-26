@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/supplier/index.php');
     }
 
-    $f['supplier']      = trim($_POST['supplier'] ?? '') ?: 'ROCC';
+    $f['supplier']      = trim($_POST['supplier'] ?? '') ?: 'Meridian';
     $f['title']         = trim($_POST['title'] ?? '');
     $f['description']   = trim($_POST['description'] ?? '');
     $f['status']        = $_POST['status'] ?? 'planned';

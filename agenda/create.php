@@ -136,7 +136,7 @@ require __DIR__ . '/../includes/layout/header.php';
           </select>
           <button type="button" id="attendee-add-user" class="btn btn--outline btn--sm">+ Add</button>
           <span class="attendee-add-or">or</span>
-          <input type="text" id="attendee-external-name" placeholder="External person, e.g. ROCC — Account Manager">
+          <input type="text" id="attendee-external-name" placeholder="External person, e.g. Meridian — Account Manager">
           <button type="button" id="attendee-add-external" class="btn btn--outline btn--sm">+ Add</button>
         </div>
         <div id="attendee-list" class="attendee-list">

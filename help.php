@@ -48,8 +48,9 @@ require __DIR__ . '/includes/layout/header.php';
       <p class="help-card-label">Getting started</p>
       <h2>What this tool is for</h2>
       <p>
-        A single place to see how Phase 2 of the repairs system delivery (moving from Servitor to ROCC) is
-        actually going — refreshed on whatever cadence the team settles on, weekly by default. Instead of
+        A single place to see how Phase 2 of the repairs system delivery (moving to a new delivery
+        supplier) is actually going — refreshed on whatever cadence the team settles on, weekly by
+        default. Instead of
         chasing updates across email and meetings, anyone on the team can check the dashboard and catch up
         in a couple of minutes.
       </p>
@@ -79,7 +80,7 @@ require __DIR__ . '/includes/layout/header.php';
         </div>
         <div>
           <span class="dl-label">Supplier activity</span>
-          <p class="dl-value">Work that's on the supplier's plate (ROCC, or any other named supplier), not the council's — kept separate from Tasks so it's always clear whose side of the fence something sits on.</p>
+          <p class="dl-value">Work that's on the supplier's plate (Meridian, or any other named supplier), not the council's — kept separate from Tasks so it's always clear whose side of the fence something sits on.</p>
         </div>
         <div>
           <span class="dl-label">Weekly update</span>
@@ -118,9 +119,9 @@ require __DIR__ . '/includes/layout/header.php';
         <ul>
           <li><span class="tag-pill">System</span>
             <ul>
-              <li><span class="tag-pill">ROCC</span></li>
-              <li><span class="tag-pill">NECH</span></li>
-              <li><span class="tag-pill">APEX</span></li>
+              <li><span class="tag-pill">Meridian</span></li>
+              <li><span class="tag-pill">Keystone</span></li>
+              <li><span class="tag-pill">Compass</span></li>
             </ul>
           </li>
           <li><span class="tag-pill">Stakeholder</span>
@@ -134,9 +135,9 @@ require __DIR__ . '/includes/layout/header.php';
               <li><span class="tag-pill">Property Services</span>
                 <div class="tag-tree-demo-field">custom field: Address
                   <ul>
-                    <li>Street: 2 Spiersbridge Way</li>
-                    <li>City: Glasgow</li>
-                    <li>Postcode: G46 8NG</li>
+                    <li>Street: 12 Example Street</li>
+                    <li>City: Anytown</li>
+                    <li>Postcode: AB1 2CD</li>
                   </ul>
                 </div>
               </li>
@@ -145,7 +146,7 @@ require __DIR__ . '/includes/layout/header.php';
           </li>
         </ul>
       </div>
-      <p class="dl-value" style="margin:.75rem 0 1rem;">Here, <strong>System</strong>, <strong>Stakeholder</strong> and <strong>Section</strong> are top-level tags; everything under them is a child tag of that parent. A task tagged <span class="tag-pill">ROCC</span> sits under <strong>System</strong> without being tagged <strong>System</strong> itself — the hierarchy is just for organising the tags, not for inheriting them onto tasks. Fields work the same way: <strong>Address</strong> above has no value of its own, just three sub-fields underneath it, each independently editable and (unlike one big text blob) each queryable on its own later.</p>
+      <p class="dl-value" style="margin:.75rem 0 1rem;">Here, <strong>System</strong>, <strong>Stakeholder</strong> and <strong>Section</strong> are top-level tags; everything under them is a child tag of that parent. A task tagged <span class="tag-pill">Meridian</span> sits under <strong>System</strong> without being tagged <strong>System</strong> itself — the hierarchy is just for organising the tags, not for inheriting them onto tasks. Fields work the same way: <strong>Address</strong> above has no value of its own, just three sub-fields underneath it, each independently editable and (unlike one big text blob) each queryable on its own later.</p>
       <div class="detail-grid">
         <div>
           <span class="dl-label">Managing tags</span>
@@ -157,7 +158,7 @@ require __DIR__ . '/includes/layout/header.php';
         </div>
         <div>
           <span class="dl-label">Filtering by tag</span>
-          <p class="dl-value">The Tag dropdown on the Tasks page shows only tasks carrying that exact tag — handy for "everything NECH-related" or "everything for Tenants."</p>
+          <p class="dl-value">The Tag dropdown on the Tasks page shows only tasks carrying that exact tag — handy for "everything Keystone-related" or "everything for Tenants."</p>
         </div>
       </div>
     </section>
