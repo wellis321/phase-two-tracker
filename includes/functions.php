@@ -622,6 +622,10 @@ function render_discussion_item_card(array $item, int $currentUserId, bool $queu
         $out .= '<input type="checkbox" class="discussion-include-checkbox" name="include_ids[]" value="' . $item['itemId'] . '"'
               . ' form="discussion-agenda-form" checked title="Include in discussion agenda"'
               . ' aria-label="Include \'' . e($item['title']) . '\' in the discussion agenda"> ';
+        $out .= '<label class="discussion-unresolved-label" title="Keep this on the list after the agenda is published, instead of archiving it">'
+              . '<input type="checkbox" class="discussion-unresolved-checkbox" name="unresolved_ids[]" value="' . $item['itemId'] . '"'
+              . ' form="discussion-agenda-form" aria-label="Mark \'' . e($item['title']) . '\' as still unresolved">'
+              . ' Still unresolved</label> ';
     }
     $out .= '<span class="pill">' . e(discussion_type_label($item['type'])) . '</span> ';
     $out .= '<a href="' . e($item['url']) . '" class="table-entity-link discussion-item-title">' . e($item['title']) . '</a> ';

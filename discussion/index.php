@@ -63,7 +63,7 @@ require __DIR__ . '/../includes/layout/header.php';
 <h2>Flagged for discussion</h2>
 <?php if ($openItems): ?>
 <?php if (is_admin()): ?>
-<p class="empty-note" style="margin-top:-.5rem;">All items below are included in the discussion agenda by default — untick any you'd like to leave out.</p>
+<p class="empty-note" style="margin-top:-.5rem;">All items below are included in the discussion agenda by default — untick any you'd like to leave out. Once that agenda is published, included items are archived off this list automatically, unless you've ticked "Still unresolved" to keep them here for next time.</p>
 <?php endif; ?>
 <?php foreach ($openItems as $item): ?>
 <?= render_discussion_item_card($item, $currentUserId, false) ?>

@@ -14,12 +14,13 @@ $users = $db->query(
 )->fetchAll();
 
 $f = [
-    'title'        => 'Programme Board',
-    'meeting_date' => date('Y-m-d'),
-    'location'     => '',
-    'content'      => generate_agenda_draft($db),
-    'kind'         => 'main',
-    'includeIds'   => [],
+    'title'         => 'Programme Board',
+    'meeting_date'  => date('Y-m-d'),
+    'location'      => '',
+    'content'       => generate_agenda_draft($db),
+    'kind'          => 'main',
+    'includeIds'    => [],
+    'unresolvedIds' => [],
 ];
 $attendeeRows = []; // array of ['user_id'=>?int, 'name'=>string, 'status'=>'attending'|'apologies']
 $errors = [];
@@ -32,21 +33,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['generate_discussion'])) {
         $includeIds = array_map('intval', $_POST['include_ids'] ?? []);
-        $f['title']        = 'Team Discussion — ' . date('j M Y');
-        $f['meeting_date'] = date('Y-m-d');
-        $f['location']     = '';
-        $f['kind']         = 'discussion';
-        $f['includeIds']   = $includeIds;
-        $f['content']      = generate_discussion_agenda_draft($db, $includeIds);
+        $f['title']         = 'Team Discussion — ' . date('j M Y');
+        $f['meeting_date']  = date('Y-m-d');
+        $f['location']      = '';
+        $f['kind']          = 'discussion';
+        $f['includeIds']    = $includeIds;
+        $f['unresolvedIds'] = array_map('intval', $_POST['unresolved_ids'] ?? []);
+        $f['content']       = generate_discussion_agenda_draft($db, $includeIds);
         goto render;
     }
 
-    $f['title']        = trim($_POST['title'] ?? '');
-    $f['meeting_date'] = $_POST['meeting_date'] ?? '';
-    $f['location']     = trim($_POST['location'] ?? '');
-    $f['content']      = $_POST['content'] ?? '';
-    $f['kind']         = ($_POST['agenda_kind'] ?? '') === 'discussion' ? 'discussion' : 'main';
-    $f['includeIds']   = array_map('intval', $_POST['include_ids'] ?? []);
+    $f['title']         = trim($_POST['title'] ?? '');
+    $f['meeting_date']  = $_POST['meeting_date'] ?? '';
+    $f['location']      = trim($_POST['location'] ?? '');
+    $f['content']       = $_POST['content'] ?? '';
+    $f['kind']          = ($_POST['agenda_kind'] ?? '') === 'discussion' ? 'discussion' : 'main';
+    $f['includeIds']    = array_map('intval', $_POST['include_ids'] ?? []);
+    $f['unresolvedIds'] = array_map('intval', $_POST['unresolved_ids'] ?? []);
 
     $postUids     = $_POST['attendee_user_id'] ?? [];
     $postNames    = $_POST['attendee_name'] ?? [];
@@ -80,6 +83,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         save_agenda_attendees($db, $agendaId, $attendeeRows);
         if ($f['kind'] !== 'discussion') {
             $db->prepare("UPDATE pm_discussion_items SET agenda_id = ? WHERE status = 'added_to_agenda' AND agenda_id IS NULL")->execute([$agendaId]);
+        } else {
+            // Archive everything that was included, except items explicitly
+            // marked "still unresolved" — those stay open and reappear
+            // (pre-checked) on the discussion list next time, instead of
+            // the list growing forever.
+            $archiveIds = array_diff($f['includeIds'], $f['unresolvedIds']);
+            if ($archiveIds) {
+                $placeholders = implode(',', array_fill(0, count($archiveIds), '?'));
+                $db->prepare("UPDATE pm_discussion_items SET status = 'added_to_agenda', agenda_id = ? WHERE id IN ($placeholders) AND status = 'open'")
+                   ->execute(array_merge([$agendaId], array_values($archiveIds)));
+            }
         }
 
         flash('success', "Agenda '{$f['title']}' published.");
@@ -110,6 +124,9 @@ require __DIR__ . '/../includes/layout/header.php';
     <input type="hidden" name="agenda_kind" value="<?= e($f['kind']) ?>">
     <?php foreach ($f['includeIds'] as $includeId): ?>
     <input type="hidden" name="include_ids[]" value="<?= (int)$includeId ?>">
+    <?php endforeach; ?>
+    <?php foreach ($f['unresolvedIds'] as $unresolvedId): ?>
+    <input type="hidden" name="unresolved_ids[]" value="<?= (int)$unresolvedId ?>">
     <?php endforeach; ?>
     <div class="form-grid">
       <div class="field">
