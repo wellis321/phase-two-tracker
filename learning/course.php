@@ -138,14 +138,6 @@ require __DIR__ . '/../includes/layout/header.php';
 </div>
 <?php endif; ?>
 
-<?php if ($timeline): ?>
-<div class="card lineage-card">
-  <h2 style="margin-top:0;">The lineage, at a glance</h2>
-  <p class="li-meta" style="margin-top:-.3rem;">Every dated figure or work this course covers, in order. Click one to jump to its lesson.</p>
-  <?= render_course_timeline($timeline) ?>
-</div>
-<?php endif; ?>
-
 <?php if (!$course['modules']): ?>
 <p class="empty-note">No modules yet<?= is_admin() ? ' — add the first one below.' : '.' ?></p>
 <?php endif; ?>
@@ -245,6 +237,14 @@ require __DIR__ . '/../includes/layout/header.php';
   <?php endif; ?>
 </div>
 <?php endforeach; ?>
+
+<?php if ($timeline): ?>
+<div class="card lineage-card">
+  <h2 style="margin-top:0;">Timeline: the lineage, at a glance</h2>
+  <p class="li-meta" style="margin-top:-.3rem;">Every dated figure or work this course covers, in order. Click one to jump to its lesson.</p>
+  <?= render_course_timeline($timeline) ?>
+</div>
+<?php endif; ?>
 
 <?php if (is_admin()): ?>
 <div class="card">
