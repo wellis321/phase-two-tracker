@@ -950,6 +950,9 @@ function build_milestone_roadmap(array $milestones, bool $hideCompletePhases = f
 function render_lesson_inline(string $text): string
 {
     $escaped = e($text);
+    // `code` first so asterisks inside it are left alone, then **bold**.
+    $escaped = preg_replace('/`([^`]+)`/', '<code>$1</code>', $escaped);
+    $escaped = preg_replace('/\*\*([^*]+)\*\*/', '<strong>$1</strong>', $escaped);
     return preg_replace(
         '/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/',
         '<a href="$2" target="_blank" rel="noopener">$1</a>',
@@ -978,6 +981,13 @@ function lesson_image_allowed_hosts(): array
  */
 function render_lesson_image(string $line): ?string
 {
+    // "![caption](local:name.svg)" -> a full-width diagram shipped with the
+    // app in assets/img/learning/ (not user-supplied, so no host check).
+    if (preg_match('/^!\[([^\]]*)\]\(local:([a-z0-9_-]+\.(?:svg|png))\)$/', trim($line), $lm)) {
+        return '<figure class="lesson-figure lesson-figure--wide"><img src="' . APP_URL . '/assets/img/learning/' . e($lm[2]) . '" alt="' . e($lm[1]) . '" loading="lazy">'
+             . ($lm[1] !== '' ? '<figcaption>' . e($lm[1]) . '</figcaption>' : '')
+             . '</figure>';
+    }
     if (!preg_match('/^!\[([^\]]*)\]\((https:\/\/[^\s)]+)\)$/', trim($line), $m)) {
         return null;
     }
@@ -1085,9 +1095,14 @@ function apply_glossary_terms(string $html, array $glossary): string
     // Split into alternating [text, tag, text, tag, ...] and only touch the
     // text segments, so matching never crosses into actual markup.
     $parts = preg_split('/(<[^>]+>)/', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $inCode = 0;
     foreach ($parts as $i => $part) {
-        if ($i % 2 === 1) continue;
-        $parts[$i] = $wrapText($part);
+        if ($i % 2 === 1) {
+            if (preg_match('/^<(pre|code)\b/i', $part)) $inCode++;
+            elseif (preg_match('/^<\/(pre|code)>/i', $part)) $inCode = max(0, $inCode - 1);
+            continue;
+        }
+        if ($inCode === 0) $parts[$i] = $wrapText($part);
     }
     return implode('', $parts);
 }
@@ -1098,17 +1113,30 @@ function render_lesson_content(string $raw, array $glossary = []): string
     $out = '';
     $paragraph = [];
     $list = [];
+    $olist = [];
     $quote = [];
+    $code = null;      // array of lines while inside a ``` fence
+    $callout = null;   // ['type' => ..., 'lines' => [...]] while inside a ::: block
 
     $flushParagraph = function () use (&$paragraph, &$out) {
         if ($paragraph) {
-            $out .= '<p>' . render_lesson_inline(implode(' ', $paragraph)) . '</p>';
+            $text = implode(' ', $paragraph);
+            // A paragraph that opens with a bolded term ("**Monolith.** One large...")
+            // is a definition-style block: give it its own card so it stands apart.
+            $class = preg_match('/^\*\*[^*]{1,90}\*\*/', $text) ? ' class="lesson-term-p"' : '';
+            $out .= '<p' . $class . '>' . render_lesson_inline($text) . '</p>';
             $paragraph = [];
         }
     };
     $flushList = function () use (&$list, &$out) {
         if ($list) {
-            $out .= '<ul>' . implode('', array_map(fn($i) => '<li>' . render_lesson_inline($i) . '</li>', $list)) . '</ul>';
+            // Lists where every item opens with a **bold term** become separated cards
+            // (definitions, options, principles); every item opening with `code` becomes
+            // a compact reference list. Anything else stays a normal bullet list.
+            $allBold = !array_filter($list, fn($i) => !preg_match('/^\*\*[^*]{1,90}\*\*/', $i));
+            $allCode = !array_filter($list, fn($i) => !preg_match('/^`[^`]+`/', $i));
+            $class = $allBold ? ' class="lesson-cards"' : ($allCode ? ' class="lesson-codes"' : '');
+            $out .= '<ul' . $class . '>' . implode('', array_map(fn($i) => '<li>' . render_lesson_inline($i) . '</li>', $list)) . '</ul>';
             $list = [];
         }
     };
@@ -1122,39 +1150,87 @@ function render_lesson_content(string $raw, array $glossary = []): string
         }
     };
 
+    $flushOList = function () use (&$olist, &$out) {
+        if ($olist) {
+            $out .= '<ol>' . implode('', array_map(fn($i) => '<li>' . render_lesson_inline($i) . '</li>', $olist)) . '</ol>';
+            $olist = [];
+        }
+    };
+
+    $calloutLabels = ['try' => 'Try it yourself', 'tip' => 'Worth knowing', 'repairs' => 'In a repairs context', 'remember' => 'Remember'];
+
     foreach ($lines as $line) {
         $trimmed = trim($line);
-        if ($trimmed === '') {
+
+        // Inside a fenced code block everything is literal until the closing fence.
+        if ($code !== null) {
+            if ($trimmed === '```') {
+                $out .= '<pre><code>' . e(implode("\n", $code)) . '</code></pre>';
+                $code = null;
+            } else {
+                $code[] = rtrim($line);
+            }
+            continue;
+        }
+        // Inside a ::: callout, collect raw lines; the body is rendered recursively on close.
+        if ($callout !== null) {
+            if ($trimmed === ':::') {
+                $label = $calloutLabels[$callout['type']];
+                $out .= '<aside class="lesson-callout lesson-callout--' . $callout['type'] . '"><p class="lesson-callout-label">'
+                      . e($label) . '</p>' . render_lesson_content(implode("\n", $callout['lines'])) . '</aside>';
+                $callout = null;
+            } else {
+                $callout['lines'][] = $line;
+            }
+            continue;
+        }
+        if ($trimmed === '```') {
+            $flushParagraph(); $flushList(); $flushOList(); $flushQuote();
+            $code = [];
+            continue;
+        }
+        if (preg_match('/^::: (try|tip|repairs|remember)$/', $trimmed, $cm)) {
+            $flushParagraph(); $flushList(); $flushOList(); $flushQuote();
+            $callout = ['type' => $cm[1], 'lines' => []];
+            continue;
+        }
+        if (preg_match('/^\d+\. (.*)$/', $trimmed, $om)) {
             $flushParagraph(); $flushList(); $flushQuote();
+            $olist[] = $om[1];
+            continue;
+        }
+        if ($trimmed === '') {
+            $flushParagraph(); $flushList(); $flushOList(); $flushQuote();
             continue;
         }
         if (str_starts_with($trimmed, '## ')) {
-            $flushParagraph(); $flushList(); $flushQuote();
+            $flushParagraph(); $flushList(); $flushOList(); $flushQuote();
             $out .= '<h3>' . e(substr($trimmed, 3)) . '</h3>';
             continue;
         }
         if (str_starts_with($trimmed, '![')) {
             $image = render_lesson_image($trimmed);
             if ($image !== null) {
-                $flushList(); $flushQuote();
+                $flushList(); $flushOList(); $flushQuote();
                 $out .= $image;
                 continue;
             }
         }
         if (str_starts_with($trimmed, '- ')) {
-            $flushParagraph(); $flushQuote();
+            $flushParagraph(); $flushOList(); $flushQuote();
             $list[] = substr($trimmed, 2);
             continue;
         }
         if (str_starts_with($trimmed, '> ')) {
-            $flushParagraph(); $flushList();
+            $flushParagraph(); $flushList(); $flushOList();
             $quote[] = substr($trimmed, 2);
             continue;
         }
-        $flushList(); $flushQuote();
+        $flushList(); $flushOList(); $flushQuote();
         $paragraph[] = $trimmed;
     }
-    $flushParagraph(); $flushList(); $flushQuote();
+    if ($code !== null) { $out .= '<pre><code>' . e(implode("\n", $code)) . '</code></pre>'; }
+    $flushParagraph(); $flushList(); $flushOList(); $flushQuote();
 
     if ($out === '') return '<p class="empty-note">No content yet.</p>';
     return $glossary ? apply_glossary_terms($out, $glossary) : $out;
