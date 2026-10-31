@@ -630,12 +630,12 @@ tbody tr:hover td { background: #f8fbf9; }
 
 /* Rich lesson content: code, callouts, numbered lists, wide diagrams */
 .lesson-content ol { margin: 0 0 1rem; padding-left: 1.5rem; }
-.lesson-content code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: .05em .35em; word-break: break-word; }
-.lesson-content pre { margin: 0 0 1rem; padding: .85rem 1rem; background: #1f2933; color: #e6edf3; border-radius: 6px; overflow-x: auto; line-height: 1.5; clear: both; }
+.lesson-content code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; background: var(--surface); border: 1px solid var(--border); padding: .05em .35em; word-break: break-word; }
+.lesson-content pre { margin: 0 0 1rem; padding: .85rem 1rem; background: #1f2933; color: #e6edf3; overflow-x: auto; line-height: 1.5; clear: both; }
 .lesson-content pre code { background: none; border: 0; padding: 0; color: inherit; font-size: .85rem; word-break: normal; white-space: pre; }
 .lesson-figure--wide { float: none; width: 100%; max-width: 760px; margin: 0 auto 1.25rem; clear: both; }
-.lesson-figure--wide img { border-radius: 6px; background: #fff; }
-.lesson-callout { margin: 0 0 1.1rem; padding: .8rem 1rem .3rem; border-radius: 6px; border: 1px solid var(--border); border-left-width: 4px; background: var(--surface); clear: both; }
+.lesson-figure--wide img { background: #fff; }
+.lesson-callout { margin: 0 0 1.1rem; padding: .8rem 1rem .3rem; border: 1px solid var(--border); border-left-width: 4px; background: var(--surface); clear: both; }
 .lesson-callout-label { margin: 0 0 .4rem !important; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .lesson-callout--try { border-left-color: #d9822b; background: #fdf6ee; }
 .lesson-callout--try .lesson-callout-label { color: #a65a12; }
@@ -655,11 +655,11 @@ tbody tr:hover td { background: #f8fbf9; }
 /* Plain bullets: custom dot, breathing room */
 .lesson-content ul:not(.lesson-cards):not(.lesson-codes) { list-style: none; padding: 0; margin: 0 0 1.25rem; }
 .lesson-content ul:not(.lesson-cards):not(.lesson-codes) > li { position: relative; padding-left: 1.5rem; margin-bottom: .6rem; }
-.lesson-content ul:not(.lesson-cards):not(.lesson-codes) > li::before { content: ""; position: absolute; left: .25rem; top: .72em; width: .42rem; height: .42rem; border-radius: 50%; background: var(--green); }
+.lesson-content ul:not(.lesson-cards):not(.lesson-codes) > li::before { content: ""; position: absolute; left: .25rem; top: .72em; width: .42rem; height: .42rem; background: var(--green); }
 
 /* Lists where every item opens with a **bold term**: one card per item */
 .lesson-content ul.lesson-cards { list-style: none; padding: 0; margin: 1.1rem 0 1.6rem; display: grid; gap: .75rem; }
-.lesson-content ul.lesson-cards > li { --accent: var(--green); display: flow-root; margin: 0; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 6px; box-shadow: var(--shadow); line-height: 1.6; }
+.lesson-content ul.lesson-cards > li { --accent: var(--green); display: flow-root; margin: 0; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--accent); box-shadow: var(--shadow); line-height: 1.6; }
 .lesson-content ul.lesson-cards > li:nth-child(5n+2) { --accent: #d9822b; }
 .lesson-content ul.lesson-cards > li:nth-child(5n+3) { --accent: #3b6ea8; }
 .lesson-content ul.lesson-cards > li:nth-child(5n+4) { --accent: #6b5b95; }
@@ -667,28 +667,28 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-content ul.lesson-cards > li > strong:first-child { color: var(--accent); font-size: 1.06em; }
 
 /* Lists where every item opens with `code` (status codes, endpoints): a tidy reference table */
-.lesson-content ul.lesson-codes { list-style: none; padding: 0; margin: .5rem 0 1.4rem; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.lesson-content ul.lesson-codes { list-style: none; padding: 0; margin: .5rem 0 1.4rem; border: 1px solid var(--border); overflow: hidden; background: var(--surface); }
 .lesson-content ul.lesson-codes > li { display: flow-root; margin: 0; padding: .6rem .95rem; border-bottom: 1px solid var(--border); }
 .lesson-content ul.lesson-codes > li:last-child { border-bottom: 0; }
 .lesson-content ul.lesson-codes > li:nth-child(even) { background: var(--bg); }
 .lesson-content ul.lesson-codes > li > code:first-child { font-weight: 700; color: var(--green-dark); background: var(--green-light); border-color: transparent; }
 
 /* A paragraph that opens with a bold term is a definition-style block */
-.lesson-content p.lesson-term-p { max-width: none; display: flow-root; margin: 0 0 .9rem; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--green); border-radius: 6px; box-shadow: var(--shadow); }
+.lesson-content p.lesson-term-p { max-width: none; display: flow-root; margin: 0 0 .9rem; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--green); box-shadow: var(--shadow); }
 .lesson-content p.lesson-term-p > strong:first-child { color: var(--green-dark); font-size: 1.04em; }
 
 /* Numbered lists become steps */
 .lesson-content ol { list-style: none; counter-reset: step; padding: 0; margin: 0 0 1.4rem; }
 .lesson-content ol > li { counter-increment: step; position: relative; padding: .1rem 0 .1rem 2.8rem; margin-bottom: .9rem; min-height: 2rem; }
-.lesson-content ol > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; border-radius: 50%; background: var(--green); color: #fff; font-weight: 700; font-size: .9rem; display: flex; align-items: center; justify-content: center; }
+.lesson-content ol > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--green); color: #fff; font-weight: 700; font-size: .9rem; display: flex; align-items: center; justify-content: center; }
 
 /* Callouts: pill label, more air, coloured steps */
-.lesson-callout { --accent: var(--green); margin: 1.5rem 0 1.6rem; padding: 1rem 1.25rem .4rem; border-radius: 8px; border: 1px solid var(--border); border-left: 5px solid var(--accent); }
+.lesson-callout { --accent: var(--green); margin: 1.5rem 0 1.6rem; padding: 1rem 1.25rem .4rem; border: 1px solid var(--border); border-left: 5px solid var(--accent); }
 .lesson-callout--try { --accent: #d9822b; }
 .lesson-callout--tip { --accent: var(--green); }
 .lesson-callout--repairs { --accent: #3b6ea8; }
 .lesson-callout--remember { --accent: #6b5b95; }
-.lesson-callout-label { display: inline-block; margin: 0 0 .7rem !important; padding: .18rem .65rem; border-radius: 999px; background: var(--accent); color: #fff !important; font-size: .7rem; letter-spacing: .07em; }
+.lesson-callout-label { display: inline-block; margin: 0 0 .7rem !important; padding: .18rem .65rem; background: var(--accent); color: #fff !important; font-size: .7rem; letter-spacing: .07em; }
 .lesson-callout p, .lesson-callout ul:not(.lesson-cards):not(.lesson-codes), .lesson-callout ol { max-width: none; }
 .lesson-callout ol > li::before { background: var(--accent); }
 .lesson-callout ul:not(.lesson-cards):not(.lesson-codes) > li::before { background: var(--accent); }
