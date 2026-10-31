@@ -996,7 +996,25 @@ function render_lesson_image(string $line): ?string
     if (!in_array($host, lesson_image_allowed_hosts(), true)) {
         return null;
     }
-    return '<figure class="lesson-figure"><img src="' . e($url) . '" alt="' . e($caption) . '" loading="lazy">'
+    // "![wide: caption](url)" shows the image full width instead of as a small
+    // floated portrait: for maps, screenshots and diagrams that need to be legible.
+    $wide = false;
+    if (preg_match('/^wide:\s*(.*)$/i', $caption, $wm)) { $wide = true; $caption = $wm[1]; }
+
+    // Every image links through to its Wikimedia Commons page so it can be opened full size.
+    $href = null;
+    if ($host === 'upload.wikimedia.org') {
+        $segments = explode('/', parse_url($url, PHP_URL_PATH) ?? '');
+        $file = in_array('thumb', $segments, true)
+            ? ($segments[count($segments) - 2] ?? '')
+            : ($segments[count($segments) - 1] ?? '');
+        if ($file !== '') $href = 'https://commons.wikimedia.org/wiki/File:' . $file;
+    }
+    $img = '<img src="' . e($url) . '" alt="' . e($caption) . '" loading="lazy">';
+    if ($href) {
+        $img = '<a href="' . e($href) . '" target="_blank" rel="noopener" title="Open the full-size image">' . $img . '</a>';
+    }
+    return '<figure class="lesson-figure' . ($wide ? ' lesson-figure--wide' : '') . '">' . $img
          . ($caption !== '' ? '<figcaption>' . e($caption) . '</figcaption>' : '')
          . '</figure>';
 }
