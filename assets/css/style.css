@@ -637,13 +637,6 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-figure--wide img { background: #fff; }
 .lesson-callout { margin: 0 0 1.1rem; padding: .8rem 1rem .3rem; border: 1px solid var(--border); border-left-width: 4px; background: var(--surface); clear: both; }
 .lesson-callout-label { margin: 0 0 .4rem !important; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.lesson-callout--try { border-left-color: #d9822b; background: #fdf6ee; }
-.lesson-callout--try .lesson-callout-label { color: #a65a12; }
-.lesson-callout--tip { border-left-color: var(--green); background: var(--green-light); }
-.lesson-callout--repairs { border-left-color: #3b6ea8; background: #eef4fb; }
-.lesson-callout--repairs .lesson-callout-label { color: #2c5483; }
-.lesson-callout--remember { border-left-color: #6b5b95; background: #f3f0f9; }
-.lesson-callout--remember .lesson-callout-label { color: #54467a; }
 
 /* ---- Lesson readability pass: rhythm, cards, steps, callouts ---- */
 .lesson-content { font-size: 1.02rem; line-height: 1.75; }
@@ -658,11 +651,7 @@ tbody tr:hover td { background: #f8fbf9; }
 
 /* Lists where every item opens with a **bold term**: one card per item */
 .lesson-content ul.lesson-cards { list-style: none; padding: 0; margin: 1.1rem 0 1.6rem; display: grid; gap: .75rem; }
-.lesson-content ul.lesson-cards > li { --accent: var(--green); display: flow-root; margin: 0; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--accent); box-shadow: var(--shadow); line-height: 1.6; }
-.lesson-content ul.lesson-cards > li:nth-child(5n+2) { --accent: #d9822b; }
-.lesson-content ul.lesson-cards > li:nth-child(5n+3) { --accent: #3b6ea8; }
-.lesson-content ul.lesson-cards > li:nth-child(5n+4) { --accent: #6b5b95; }
-.lesson-content ul.lesson-cards > li:nth-child(5n+5) { --accent: #b91c1c; }
+.lesson-content ul.lesson-cards > li { --accent: var(--green); display: flow-root; margin: 0; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--accent); line-height: 1.6; }
 .lesson-content ul.lesson-cards > li > strong:first-child { color: var(--accent); font-size: 1.06em; }
 
 /* Lists where every item opens with `code` (status codes, endpoints): a tidy reference table */
@@ -673,7 +662,7 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-content ul.lesson-codes > li > code:first-child { font-weight: 700; color: var(--green-dark); background: var(--green-light); border-color: transparent; }
 
 /* A paragraph that opens with a bold term is a definition-style block */
-.lesson-content p.lesson-term-p { display: flow-root; margin: 0 0 .9rem; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--green); box-shadow: var(--shadow); }
+.lesson-content p.lesson-term-p { display: flow-root; margin: 0 0 .9rem; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--green); }
 .lesson-content p.lesson-term-p > strong:first-child { color: var(--green-dark); font-size: 1.04em; }
 
 /* Numbered lists become steps */
@@ -683,17 +672,14 @@ tbody tr:hover td { background: #f8fbf9; }
 
 /* Callouts: pill label, more air, coloured steps */
 .lesson-callout { --accent: var(--green); margin: 1.5rem 0 1.6rem; padding: 1rem 1.25rem .4rem; border: 1px solid var(--border); border-left: 5px solid var(--accent); }
-.lesson-callout--try { --accent: #d9822b; }
-.lesson-callout--tip { --accent: var(--green); }
-.lesson-callout--repairs { --accent: #3b6ea8; }
-.lesson-callout--remember { --accent: #6b5b95; }
 .lesson-callout-label { display: inline-block; margin: 0 0 .7rem !important; padding: .18rem .65rem; background: var(--accent); color: #fff !important; font-size: .7rem; letter-spacing: .07em; }
 .lesson-callout ol > li::before { background: var(--accent); }
 .lesson-callout ul:not(.lesson-cards):not(.lesson-codes) > li::before { background: var(--accent); }
 .lesson-callout ul.lesson-cards > li, .lesson-callout p.lesson-term-p { box-shadow: none; }
-.lesson-callout--try { background: #fdf6ee; }
-.lesson-callout--repairs { background: #eef4fb; }
-.lesson-callout--remember { background: #f3f0f9; }
+
+/* One accent colour throughout: callouts differ by label, not by hue */
+.lesson-callout { --accent: var(--green); background: #f7f8f7; }
+.lesson-callout--try { background: var(--green-light); }
 
 .lineage-card { margin-bottom: 1rem; overflow: hidden; }
 .lineage-timeline { overflow-x: auto; padding: .5rem 0 .75rem; }

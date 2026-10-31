@@ -1123,7 +1123,7 @@ function render_lesson_content(string $raw, array $glossary = []): string
             $text = implode(' ', $paragraph);
             // A paragraph that opens with a bolded term ("**Monolith.** One large...")
             // is a definition-style block: give it its own card so it stands apart.
-            $class = preg_match('/^\*\*[^*]{1,90}\*\*/', $text) ? ' class="lesson-term-p"' : '';
+            $class = (preg_match('/^\*\*[^*]{1,90}\*\*/', $text) && !str_ends_with(rtrim($text), ':')) ? ' class="lesson-term-p"' : '';
             $out .= '<p' . $class . '>' . render_lesson_inline($text) . '</p>';
             $paragraph = [];
         }
