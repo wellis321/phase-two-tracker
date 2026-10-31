@@ -647,7 +647,6 @@ tbody tr:hover td { background: #f8fbf9; }
 
 /* ---- Lesson readability pass: rhythm, cards, steps, callouts ---- */
 .lesson-content { font-size: 1.02rem; line-height: 1.75; }
-.lesson-content p, .lesson-content ul:not(.lesson-cards):not(.lesson-codes), .lesson-content ol { max-width: 72ch; }
 .lesson-content h3 { margin: 2.3rem 0 .85rem; padding-bottom: .4rem; border-bottom: 2px solid var(--green-light); font-size: 1.2rem; color: var(--green-dark); line-height: 1.3; clear: none; }
 .lesson-content h3:first-child { margin-top: 0; }
 .lesson-content p { margin: 0 0 1.1rem; }
@@ -674,7 +673,7 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-content ul.lesson-codes > li > code:first-child { font-weight: 700; color: var(--green-dark); background: var(--green-light); border-color: transparent; }
 
 /* A paragraph that opens with a bold term is a definition-style block */
-.lesson-content p.lesson-term-p { max-width: none; display: flow-root; margin: 0 0 .9rem; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--green); box-shadow: var(--shadow); }
+.lesson-content p.lesson-term-p { display: flow-root; margin: 0 0 .9rem; padding: .85rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--green); box-shadow: var(--shadow); }
 .lesson-content p.lesson-term-p > strong:first-child { color: var(--green-dark); font-size: 1.04em; }
 
 /* Numbered lists become steps */
@@ -689,7 +688,6 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-callout--repairs { --accent: #3b6ea8; }
 .lesson-callout--remember { --accent: #6b5b95; }
 .lesson-callout-label { display: inline-block; margin: 0 0 .7rem !important; padding: .18rem .65rem; background: var(--accent); color: #fff !important; font-size: .7rem; letter-spacing: .07em; }
-.lesson-callout p, .lesson-callout ul:not(.lesson-cards):not(.lesson-codes), .lesson-callout ol { max-width: none; }
 .lesson-callout ol > li::before { background: var(--accent); }
 .lesson-callout ul:not(.lesson-cards):not(.lesson-codes) > li::before { background: var(--accent); }
 .lesson-callout ul.lesson-cards > li, .lesson-callout p.lesson-term-p { box-shadow: none; }
