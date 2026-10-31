@@ -638,6 +638,27 @@ tbody tr:hover td { background: #f8fbf9; }
 .lesson-callout { margin: 0 0 1.1rem; padding: .8rem 1rem .3rem; border: 1px solid var(--border); border-left-width: 4px; background: var(--surface); clear: both; }
 .lesson-callout-label { margin: 0 0 .4rem !important; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 
+/* ---- Course library: one card per course ---- */
+.course-list { display: grid; gap: 1.25rem; margin-top: 1rem; }
+.course-card { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 2rem; padding: 1.6rem 1.75rem; background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--green); box-shadow: var(--shadow); }
+.course-card-title { margin: 0 0 .5rem; font-size: 1.3rem; line-height: 1.25; }
+.course-card-title a { color: var(--text); text-decoration: none; }
+.course-card-title a:hover { color: var(--green-dark); text-decoration: underline; }
+.course-card-desc { margin: 0 0 1rem; color: var(--muted); line-height: 1.65; }
+.course-card-stats { display: flex; gap: 0; margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); width: max-content; max-width: 100%; }
+.course-card-stats li { padding: .35rem .9rem; font-size: .85rem; color: var(--muted); }
+.course-card-stats li + li { border-left: 1px solid var(--border); }
+.course-card-stats strong { color: var(--text); font-size: 1rem; }
+.course-card-side { display: flex; flex-direction: column; justify-content: center; gap: .6rem; padding-left: 2rem; border-left: 1px solid var(--border); }
+.course-card-progress-label { margin: 0; font-size: .88rem; color: var(--muted); }
+.course-card-progress-label strong { color: var(--text); font-size: 1.15rem; }
+.course-card-actions { display: flex; align-items: center; gap: .6rem; margin-top: .4rem; flex-wrap: wrap; }
+.course-card-actions form { margin: 0; }
+@media (max-width: 760px) {
+  .course-card { grid-template-columns: 1fr; gap: 1.25rem; padding: 1.25rem; }
+  .course-card-side { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); padding-top: 1rem; }
+}
+
 /* ---- Lesson readability pass: rhythm, cards, steps, callouts ---- */
 .lesson-content { font-size: 1.02rem; line-height: 1.75; }
 .lesson-content h3 { margin: 2.3rem 0 .85rem; padding-bottom: .4rem; border-bottom: 2px solid var(--green-light); font-size: 1.2rem; color: var(--green-dark); line-height: 1.3; clear: none; }

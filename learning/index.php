@@ -56,44 +56,42 @@ require __DIR__ . '/../includes/layout/header.php';
 <?php foreach ($errors as $err): ?><div class="flash flash-error"><?= e($err) ?></div><?php endforeach; ?>
 
 <?php if ($courses): ?>
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>Course</th>
-        <th>Modules</th>
-        <th>Your progress</th>
-        <?php if (is_admin()): ?><th class="col-actions">Actions</th><?php endif; ?>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($courses as $c): ?>
-      <tr class="table-row--clickable" data-href="<?= APP_URL ?>/learning/course.php?id=<?= $c['id'] ?>">
-        <td>
-          <a href="<?= APP_URL ?>/learning/course.php?id=<?= $c['id'] ?>" class="table-entity-link"><?= e($c['title']) ?></a>
-          <?php if ($c['description']): ?><div class="li-meta" style="margin-top:.2rem;"><?= e($c['description']) ?></div><?php endif; ?>
-        </td>
-        <td><?= $c['moduleCount'] ?> <?= $c['moduleCount'] === 1 ? 'module' : 'modules' ?>, <?= $c['lessonCount'] ?> <?= $c['lessonCount'] === 1 ? 'lesson' : 'lessons' ?></td>
-        <td>
-          <?php if ($c['lessonCount'] > 0): ?>
-          <?= $c['completedCount'] ?> / <?= $c['lessonCount'] ?> complete
-          <?php else: ?>
-          <span class="empty-note">No lessons yet</span>
-          <?php endif; ?>
-        </td>
+<div class="course-list">
+  <?php foreach ($courses as $c):
+      $total = (int)$c['lessonCount']; $done = (int)$c['completedCount'];
+      $pct = $total > 0 ? (int)round($done / $total * 100) : 0;
+      $cta = $done === 0 ? 'Start course' : ($done >= $total ? 'Review course' : 'Continue');
+      $href = APP_URL . '/learning/course.php?id=' . $c['id'];
+  ?>
+  <article class="course-card">
+    <div class="course-card-main">
+      <h2 class="course-card-title"><a href="<?= $href ?>"><?= e($c['title']) ?></a></h2>
+      <?php if ($c['description']): ?><p class="course-card-desc"><?= e($c['description']) ?></p><?php endif; ?>
+      <ul class="course-card-stats">
+        <li><strong><?= $c['moduleCount'] ?></strong> <?= $c['moduleCount'] === 1 ? 'module' : 'modules' ?></li>
+        <li><strong><?= $total ?></strong> <?= $total === 1 ? 'lesson' : 'lessons' ?></li>
+      </ul>
+    </div>
+    <div class="course-card-side">
+      <?php if ($total > 0): ?>
+      <p class="course-card-progress-label"><strong><?= $done ?></strong> of <?= $total ?> lessons complete</p>
+      <div class="lesson-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= $pct ?>"><div class="lesson-progress-bar-fill" style="width:<?= $pct ?>%;"></div></div>
+      <?php else: ?>
+      <p class="course-card-progress-label empty-note">No lessons yet</p>
+      <?php endif; ?>
+      <div class="course-card-actions">
+        <a class="btn btn--primary" href="<?= $href ?>"><?= $cta ?></a>
         <?php if (is_admin()): ?>
-        <td class="col-actions">
-          <form method="POST" action="" onsubmit="return confirm('Delete &quot;<?= e($c['title']) ?>&quot; and everything in it?');">
-            <?= csrf_field() ?>
-            <input type="hidden" name="delete_course" value="<?= $c['id'] ?>">
-            <button type="submit" class="btn btn--outline btn--sm">Delete</button>
-          </form>
-        </td>
+        <form method="POST" action="" onsubmit="return confirm('Delete &quot;<?= e($c['title']) ?>&quot; and everything in it?');">
+          <?= csrf_field() ?>
+          <input type="hidden" name="delete_course" value="<?= $c['id'] ?>">
+          <button type="submit" class="btn btn--outline btn--sm">Delete</button>
+        </form>
         <?php endif; ?>
-      </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+      </div>
+    </div>
+  </article>
+  <?php endforeach; ?>
 </div>
 <?php else: ?>
 <p class="empty-note">No courses yet<?= is_admin() ? ' — add the first one below.' : '.' ?></p>
