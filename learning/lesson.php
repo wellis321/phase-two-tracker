@@ -226,6 +226,19 @@ require __DIR__ . '/../includes/layout/header.php';
 </div>
 <?php endif; ?>
 
+<div class="lesson-nav">
+  <div class="lesson-nav-link">
+    <?php if ($prevLesson): ?>
+    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $prevLesson['id'] ?>"><?= icon_arrow_left() ?> <?= e($prevLesson['title']) ?></a>
+    <?php endif; ?>
+  </div>
+  <div class="lesson-nav-link lesson-nav-link--next">
+    <?php if ($nextLesson): ?>
+    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $nextLesson['id'] ?>"><?= e($nextLesson['title']) ?> &rarr;</a>
+    <?php endif; ?>
+  </div>
+</div>
+
 <div class="card comments-card" id="comments">
   <h2 style="margin-top:0;">Discussion</h2>
   <?php if (!$comments): ?>
@@ -257,19 +270,6 @@ require __DIR__ . '/../includes/layout/header.php';
     </div>
     <button type="submit" class="btn btn--primary btn--sm" style="margin-top:.5rem;">Post comment</button>
   </form>
-</div>
-
-<div class="lesson-nav">
-  <div class="lesson-nav-link">
-    <?php if ($prevLesson): ?>
-    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $prevLesson['id'] ?>"><?= icon_arrow_left() ?> <?= e($prevLesson['title']) ?></a>
-    <?php endif; ?>
-  </div>
-  <div class="lesson-nav-link lesson-nav-link--next">
-    <?php if ($nextLesson): ?>
-    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $nextLesson['id'] ?>"><?= e($nextLesson['title']) ?> &rarr;</a>
-    <?php endif; ?>
-  </div>
 </div>
 
 <?php require __DIR__ . '/../includes/layout/footer.php'; ?>
