@@ -786,9 +786,14 @@ tbody tr:hover td { background: #f8fbf9; }
 .glossary-entry dd { margin: .25rem 0 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
 .glossary-entry-actions { display: flex; gap: .5rem; align-items: center; flex-shrink: 0; }
 
-.lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
-.lesson-nav-link { flex: 1; }
-.lesson-nav-link--next { text-align: right; }
+.lesson-nav { display: flex; justify-content: space-between; gap: 1rem; margin: 1.5rem 0; }
+.lesson-nav-link { flex: 1; display: flex; }
+.lesson-nav-link--next { justify-content: flex-end; }
+.lesson-nav-btn { flex-direction: column; align-items: flex-start; justify-content: center; gap: .15rem; height: auto; min-height: 3.25rem; padding: .6rem 1.1rem; white-space: normal; text-align: left; max-width: 100%; }
+.lesson-nav-link--next .lesson-nav-btn { align-items: flex-end; text-align: right; }
+.lesson-nav-dir { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; opacity: .85; }
+.lesson-nav-title { font-size: .9rem; font-weight: 600; }
+@media (max-width: 640px) { .lesson-nav { flex-direction: column; } .lesson-nav-link--next { justify-content: stretch; } .lesson-nav-btn { width: 100%; } }
 .lesson-progress-bar { width: 100%; height: 6px; background: var(--border); margin: .4rem 0 0; }
 .lesson-progress-bar-fill { height: 100%; background: var(--green); }
 

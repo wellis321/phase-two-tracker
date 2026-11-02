@@ -229,12 +229,12 @@ require __DIR__ . '/../includes/layout/header.php';
 <div class="lesson-nav">
   <div class="lesson-nav-link">
     <?php if ($prevLesson): ?>
-    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $prevLesson['id'] ?>"><?= icon_arrow_left() ?> <?= e($prevLesson['title']) ?></a>
+    <a class="btn btn--outline lesson-nav-btn" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $prevLesson['id'] ?>"><span class="lesson-nav-dir">&larr; Previous</span><span class="lesson-nav-title"><?= e($prevLesson['title']) ?></span></a>
     <?php endif; ?>
   </div>
   <div class="lesson-nav-link lesson-nav-link--next">
     <?php if ($nextLesson): ?>
-    <a class="back-link" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $nextLesson['id'] ?>"><?= e($nextLesson['title']) ?> &rarr;</a>
+    <a class="btn btn--primary lesson-nav-btn" href="<?= APP_URL ?>/learning/lesson.php?id=<?= $nextLesson['id'] ?>"><span class="lesson-nav-dir">Next &rarr;</span><span class="lesson-nav-title"><?= e($nextLesson['title']) ?></span></a>
     <?php endif; ?>
   </div>
 </div>
